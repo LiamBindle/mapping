@@ -1,4 +1,5 @@
 import os.path
+import numpy as np
 import geopandas
 import shapely.geometry
 
@@ -19,6 +20,8 @@ filename_lookup = {
     'tiger_states': ['tl_2017_us_state.shp', 'tl_2017_us_state/tl_2017_us_state.shp'],
     'tiger_roads': ['tl_2016_us_primaryroads.shp', 'tl_2016_us_primaryroads/tl_2016_us_primaryroads.shp'],
     'naturalearth_sr': ['SR_LR.tif', 'SR_LR/SR_LR.tif'],
+    'naturalearth_countries': ['ne_10m_admin_0_map_subunits.shp', 'ne_10m_admin_0_map_subunits/ne_10m_admin_0_map_subunits.shp'],
+    'naturalearth_states': ['ne_10m_admin_1_states_provinces.shp', 'ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp']
 }
 
 def find_shapefile(shapefile_paths: list, item_name):
@@ -32,9 +35,6 @@ def find_shapefile(shapefile_paths: list, item_name):
     raise ValueError(f"Can't find \"{item_name}\" in shapefile paths")
 
 
-
-
-
 def get_tiger_states(shapefile_paths: list):
     # TIGER/Line shapefiles:
     #   https://www2.census.gov/geo/tiger/TIGER2017//STATE/tl_2017_us_state.zip
@@ -42,6 +42,21 @@ def get_tiger_states(shapefile_paths: list):
     df = geopandas.read_file(shapefile).set_index('NAME')
     return df
 
+
+def get_countries(shapefile_paths: list):
+    # Natural Earth Admin 0 Subunits:
+    #   https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_map_subunits.zip
+    shapefile = find_shapefile(shapefile_paths, "naturalearth_countries")
+    df = geopandas.read_file(shapefile).set_index('NAME')
+    return df
+
+
+def get_provinces_and_states(shapefile_paths: list):
+    # Natural Earth Admin 1:
+    #   https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_1_states_provinces.zip
+    shapefile = find_shapefile(shapefile_paths, "naturalearth_states")
+    df = geopandas.read_file(shapefile).set_index('name')
+    return df
 
 def tiger_states_to_contiguous_us(tiger_states, simplify_tolerance=0.01):
     tiger_states = tiger_states.loc[contiguous_states()]
@@ -52,21 +67,43 @@ def tiger_states_to_contiguous_us(tiger_states, simplify_tolerance=0.01):
         return contiguous_us
 
 
+def mask_outside(x, y, polygon: shapely.geometry.MultiPolygon):
+    x_flat = x.flatten()
+    y_flat = y.flatten()
+    points = [shapely.geometry.Point(xp, yp) for xp, yp in zip(x_flat, y_flat)]
+    mask = np.array([polygon.envelope.contains(pt) for pt in points])
+    for i in np.argwhere(mask):
+        mask[i.item()] = polygon.contains(points[i.item()])
+    return mask.reshape(x.shape)
+
+
 if __name__ == '__main__':
-    shp = get_tiger_states('/home/liam/Downloads')
-    cus = tiger_states_to_contiguous_us(shp)
+    # shp = get_tiger_states('/home/liam/Downloads')
+    # cus = tiger_states_to_contiguous_us(shp)
 
     import maps.features
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
 
-    CA = shp.loc['California'].geometry
+    shp = get_countries('/home/liam/Downloads/')
+    region = shp.loc['United States of America'].geometry
+    # shp = get_provinces_and_states('/home/liam/Downloads/')
+    # region = shp.loc['California'].geometry
 
-    fig = plt.figure(figsize=maps.figsize_fitting_polygon(CA, 5))
+    fig = plt.figure(figsize=maps.figsize_fitting_polygon(region, projection=ccrs.epsg(2163)))
     ax = plt.axes(projection=ccrs.epsg(2163))
-    # maps.set_extent(ax, CA)
+    ax.set_facecolor('black')
+    maps.set_extent(ax, region)
     maps.features.format_page(ax, linewidth_axis_spines=0)
-    maps.features.add_polygons(ax, shp.loc[contiguous_states()]['geometry'])
+    # maps.features.add_polygons(ax, shp.loc[contiguous_states()]['geometry'])
+
+    # poly = [p for p in region]
+    #
+    # region = region.envelope.buffer(100)
+    # for p in poly:
+    #     region = region.difference(p)
+
+    maps.features.add_polygons(ax, region, exterior=True)
     plt.tight_layout()
     # plt.show()
 

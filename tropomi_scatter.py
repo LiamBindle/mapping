@@ -52,6 +52,9 @@ if __name__ == '__main__':
     lats = lats[mask]
     lons = lons[mask]
 
+    import maps.shapefiles
+    foo = maps.shapefiles.mask_outside(lons, lats, region)
+
     inside_region = [region.contains(shapely.geometry.Point(xp, yp)) for xp, yp in tqdm(zip(lons, lats), total=lats.size)]
 
     x = x[inside_region]

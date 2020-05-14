@@ -1,10 +1,12 @@
 import rasterio
 import cartopy.crs as ccrs
+import pyproj
 import matplotlib.colors
 
 import cartopy.io.shapereader
 import cartopy.feature
 import shapely.geometry
+import shapely.ops
 import geopandas
 
 import maps.defaults
@@ -51,17 +53,30 @@ def tiger_roads(ax, tiger_path, rttyp=('U', 'I'), **add_feature_kwargs):
     )
 
 
-def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=True, **add_feature_kwargs):
+def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=False, exterior=False, exterior_thresh=0.0005, **add_feature_kwargs):
     if isinstance(polygons, shapely.geometry.base.BaseGeometry):
         polygons = [polygons]
     if outline:
         add_feature_kwargs.setdefault('facecolor', 'none')
         add_feature_kwargs.setdefault('edgecolor', 'blue')
         add_feature_kwargs.setdefault('linewidth', 0.5)
-    else:
-        add_feature_kwargs.setdefault('facecolor', 'blue')
-        add_feature_kwargs.setdefault('edgecolor', 'none')
-        add_feature_kwargs.setdefault('linewidth', 'none')
+    if exterior:
+        new_polygons = []
+        for polygon in polygons:
+            if isinstance(polygon, shapely.geometry.MultiPolygon):
+                exterior_area_thresh = polygon.envelope.area * exterior_thresh
+
+                holes = [p for p in polygon]
+                polygon = polygon.envelope.buffer(100)
+                for i, p in enumerate(holes):
+                    if p.area < exterior_area_thresh:
+                        continue
+                    polygon = polygon.difference(p)
+
+                new_polygons.append(polygon)
+            else:
+                new_polygons.append(polygon.envelope.buffer(100).difference(polygon))
+        polygons = new_polygons
     ax.add_feature(
         cartopy.feature.ShapelyFeature(polygons, crs=crs),
         **add_feature_kwargs
@@ -69,11 +84,18 @@ def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=True, **add
 
 
 def set_extent(ax, polygon):
+    projection = pyproj.Proj(ax.projection.proj4_init)
+    transform = pyproj.Transformer.from_proj('+proj=latlon', projection).transform
+    polygon = shapely.ops.transform(transform, polygon)
     xmin, ymin, xmax, ymax = polygon.bounds
-    ax.set_extent([xmin, xmax, ymin, ymax])
+    ax.set_extent([xmin, xmax, ymin, ymax], crs=ax.projection)
 
 
-def figsize_fitting_polygon(polygon, width=3):
+def figsize_fitting_polygon(polygon, projection: ccrs.Projection, width=8):
+    projection = pyproj.Proj(projection.proj4_init)
+    transform = pyproj.Transformer.from_proj('+proj=latlon', projection).transform
+
+    polygon = shapely.ops.transform(transform, polygon)
     xmin, ymin, xmax, ymax = polygon.bounds
     return width, width * (ymax-ymin)/(xmax-xmin)
 
