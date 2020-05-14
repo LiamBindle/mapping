@@ -5,6 +5,7 @@ import matplotlib.colors
 import cartopy.io.shapereader
 import cartopy.feature
 import shapely.geometry
+import geopandas
 
 import maps.defaults
 
@@ -48,6 +49,33 @@ def tiger_roads(ax, tiger_path, rttyp=('U', 'I'), **add_feature_kwargs):
         cartopy.feature.ShapelyFeature(geometries, crs=ccrs.PlateCarree()),
         **add_feature_kwargs
     )
+
+
+def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=True, **add_feature_kwargs):
+    if isinstance(polygons, shapely.geometry.base.BaseGeometry):
+        polygons = [polygons]
+    if outline:
+        add_feature_kwargs.setdefault('facecolor', 'none')
+        add_feature_kwargs.setdefault('edgecolor', 'blue')
+        add_feature_kwargs.setdefault('linewidth', 0.5)
+    else:
+        add_feature_kwargs.setdefault('facecolor', 'blue')
+        add_feature_kwargs.setdefault('edgecolor', 'none')
+        add_feature_kwargs.setdefault('linewidth', 'none')
+    ax.add_feature(
+        cartopy.feature.ShapelyFeature(polygons, crs=crs),
+        **add_feature_kwargs
+    )
+
+
+def set_extent(ax, polygon):
+    xmin, ymin, xmax, ymax = polygon.bounds
+    ax.set_extent([xmin, xmax, ymin, ymax])
+
+
+def figsize_fitting_polygon(polygon, width=3):
+    xmin, ymin, xmax, ymax = polygon.bounds
+    return width, width * (ymax-ymin)/(xmax-xmin)
 
 
 def outlines(ax, coastlines=True, borders=True, states=False, lakes=True, **kwargs):
