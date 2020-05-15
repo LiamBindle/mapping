@@ -311,26 +311,6 @@ if __name__ == '__main__':
     if ds_norm is None:
         da_norm = da
 
-    if args['norm_by_mean']:
-        da = da / da.mean()
-        da_norm = da_norm / da_norm.mean()
-
-    if args['norm'] is None:
-        norm = plt.Normalize(da_norm.quantile(args['norm1_quantile']), da_norm.quantile(args['norm2_quantile']))
-    else:
-        norm = plt.Normalize(args['norm'][0], args['norm'][1])
-
-
-    if args['cbar_only']:
-        plt.figure(figsize=(args['cbar_only']))
-        ax = plt.axes()
-        cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(args['cmap']),
-                                        norm=norm,
-                                        orientation='horizontal')
-        cb.set_label(args['cbar_label'])
-        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
-        exit(0)
-
     # Open grid def file
     grid = xr.open_dataset(args['grid_def'])
 
@@ -391,6 +371,24 @@ if __name__ == '__main__':
         elif stat == 'std':
             stats['std'] = np.nanstd(data_for_stats)
 
+    if args['norm_by_mean']:
+        da = da / da.mean()
+        da_norm = da_norm / da_norm.mean()
+
+    if args['norm'] is None:
+        norm = plt.Normalize(da_norm.quantile(args['norm1_quantile']), da_norm.quantile(args['norm2_quantile']))
+    else:
+        norm = plt.Normalize(args['norm'][0], args['norm'][1])
+
+    if args['cbar_only']:
+        plt.figure(figsize=(args['cbar_only']))
+        ax = plt.axes()
+        cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(args['cmap']),
+                                              norm=norm,
+                                              orientation='horizontal')
+        cb.set_label(args['cbar_label'])
+        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
+        exit(0)
 
     for nf in nf_range:
         xe = grid['xe'].isel(nf=nf).values % 360
