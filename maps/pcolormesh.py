@@ -270,6 +270,9 @@ if __name__ == '__main__':
                         type=str,
                         choices=['mean', 'sum', 'std', 'median'],
                         default=[],)
+    parser.add_argument('--name',
+                        type=str,
+                        default='',)
     parser.add_argument('--region',
                         metavar='x0x1y0y1',
                         type=str,
@@ -410,7 +413,7 @@ if __name__ == '__main__':
 
     if len(stats) > 0:
         plt.text(
-            s="\n".join([f"{stat_name}: {stat_value:4.2e}" for stat_name, stat_value in stats.items()]),
+            s="\n".join([args['name'], *[f"{stat_name}: {stat_value:4.2e}" for stat_name, stat_value in stats.items()]]),
             transform=ax.transAxes,
             zorder=101,
             **stats_text_pos
