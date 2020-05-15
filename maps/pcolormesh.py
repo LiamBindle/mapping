@@ -268,7 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('--stats',
                         nargs='+',
                         type=str,
-                        choices=['mean', 'sum', 'std'],
+                        choices=['mean', 'sum', 'std', 'median'],
                         default=[],)
     parser.add_argument('--region',
                         metavar='x0x1y0y1',
@@ -376,6 +376,8 @@ if __name__ == '__main__':
             stats['sum'] = np.nansum(data_for_stats)
         elif stat == 'std':
             stats['std'] = np.nanstd(data_for_stats)
+        elif stat == 'median':
+            stats['median'] = np.nanmedian(data_for_stats)
 
     if args['norm_by_median']:
         da = da / da.median()
