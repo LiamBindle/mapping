@@ -38,6 +38,7 @@ def compute_column(ds, ds_mete):
         return column[in_troposphere].sum(axis=0)
 
     pfloor = ds_mete['Met_PEDGE'].isel(lev=slice(0, -1)).assign_coords({'lev': ds.coords['lev']})
+    ds = ds.assign_coords({'time': ds_mete.coords['time']}) # force time to be the same
     ds = xr.apply_ufunc(
         sum_below_tropopause,
         ds,
