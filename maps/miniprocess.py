@@ -39,14 +39,21 @@ def compute_column(ds, ds_mete):
 
     pfloor = ds_mete['Met_PEDGE'].isel(lev=slice(0, -1)).assign_coords({'lev': ds.coords['lev']})
     ds = ds.assign_coords({'time': ds_mete.coords['time']}) # force time to be the same
-    ds = xr.apply_ufunc(
+
+    ds_with_vertical = ds.drop([v for v in ds.data_vars if 'lev' not in ds[v].dims])
+    ds = ds.drop([v for v in ds.data_vars if 'lev' in ds[v].dims])
+
+    ds_with_vertical = xr.apply_ufunc(
         sum_below_tropopause,
-        ds,
+        ds_with_vertical,
         pfloor,
         ds_metc['Met_TropP'],
         input_core_dims=[['lev'], ['lev'], []],
         vectorize=True
     )
+
+    for v in ds_with_vertical.data_vars:
+        ds[v] = ds_with_vertical[v]
     return ds
 
 
