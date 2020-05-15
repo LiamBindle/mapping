@@ -263,6 +263,8 @@ if __name__ == '__main__':
     parser.add_argument('--scale_factor',
                         type=float,
                         default=1.0,)
+    parser.add_argument('--norm_by_mean',
+                        action='store_true')
     parser.add_argument('--stats',
                         nargs='+',
                         type=str,
@@ -304,10 +306,14 @@ if __name__ == '__main__':
 
     da = sum([ds[varname].squeeze().transpose('nf', 'Ydim', 'Xdim') for varname in args['var']]) * args['scale_factor']
     if ds_norm is not None:
-        da_norm = ds_norm[args['var']].squeeze().transpose('nf', 'Ydim', 'Xdim') * args['scale_factor']
+        da_norm = sum([ds_norm[varname].squeeze().transpose('nf', 'Ydim', 'Xdim') for varname in args['var']]) * args['scale_factor']
 
     if ds_norm is None:
         da_norm = da
+
+    if args['norm_by_mean']:
+        da = da / da.mean()
+        da_norm = da_norm / da_norm.mean()
 
     if args['norm'] is None:
         norm = plt.Normalize(da_norm.quantile(args['norm1_quantile']), da_norm.quantile(args['norm2_quantile']))
