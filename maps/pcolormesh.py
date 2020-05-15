@@ -263,7 +263,7 @@ if __name__ == '__main__':
     parser.add_argument('--scale_factor',
                         type=float,
                         default=1.0,)
-    parser.add_argument('--norm_by_mean',
+    parser.add_argument('--norm_by_median',
                         action='store_true')
     parser.add_argument('--stats',
                         nargs='+',
@@ -377,9 +377,9 @@ if __name__ == '__main__':
         elif stat == 'std':
             stats['std'] = np.nanstd(data_for_stats)
 
-    if args['norm_by_mean']:
-        da = da / da.mean()
-        da_norm = da_norm / da_norm.mean()
+    if args['norm_by_median']:
+        da = da / da.median()
+        da_norm = da_norm / da_norm.median()
 
     if args['norm'] is None:
         norm = plt.Normalize(da_norm.quantile(args['norm1_quantile']), da_norm.quantile(args['norm2_quantile']))
