@@ -249,6 +249,9 @@ if __name__ == '__main__':
                         type=float,
                         default=None,
                         help='map extent')
+    parser.add_argument('--width',
+                        type=float,
+                        default=8)
     parser.add_argument('--cbar_only',
                         nargs=2,
                         metavar='XY XY',
@@ -299,9 +302,9 @@ if __name__ == '__main__':
         if ds_norm is not None:
             ds_norm = ds_norm.isel(**{isel_k: int(isel_v)})
 
-    da = sum([ds[varname].squeeze().transpose('nf', 'Ydim', 'Xdim') for varname in args['var']])
+    da = sum([ds[varname].squeeze().transpose('nf', 'Ydim', 'Xdim') for varname in args['var']]) * args['scale_factor']
     if ds_norm is not None:
-        da_norm = ds_norm[args['var']].squeeze().transpose('nf', 'Ydim', 'Xdim')
+        da_norm = ds_norm[args['var']].squeeze().transpose('nf', 'Ydim', 'Xdim') * args['scale_factor']
 
     if ds_norm is None:
         da_norm = da
@@ -327,7 +330,7 @@ if __name__ == '__main__':
 
 
     if args['region'] == 'global':
-        plt.figure(figsize=(8,6))
+        plt.figure(figsize=(args['width'], args['width']*0.75))
         ax = plt.axes(projection=eval(args['crs']))
         if args['extent'] is None:
             ax.set_global()
@@ -356,7 +359,7 @@ if __name__ == '__main__':
             )
 
         crs = ccrs.epsg(2163)
-        plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=8))
+        plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=args['width']))
         ax = plt.axes(projection=crs)
         maps.set_extent(ax, region)
         maps.features.format_page(ax, linewidth_axis_spines=0)
@@ -391,7 +394,7 @@ if __name__ == '__main__':
         face_xy = get_minor_xy(xe % 360, ye)
         blocksize = determine_blocksize(face_xy, xc % 360, yc)
         # print(f'Block size for face {nf+1}: {blocksize}')
-        pcolormesh2(xe, ye, da.isel(nf=nf) * args['scale_factor'], blocksize, norm, cmap=args['cmap'])
+        pcolormesh2(xe, ye, da.isel(nf=nf), blocksize, norm, cmap=args['cmap'])
 
     if len(stats) > 0:
         plt.text(
