@@ -325,6 +325,12 @@ if __name__ == '__main__':
         ax.coastlines(linewidth=0.5)
         nf_range = range(6)
         data_for_stats = da.values
+        stats_text_pos = dict(
+            x=0.03,
+            y=0.05,
+            horizontalalignment='left',
+            verticalalignment='bottom',
+        )
     else:
         import maps
         if args['region'] == 'California':
