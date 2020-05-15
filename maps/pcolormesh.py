@@ -249,12 +249,31 @@ if __name__ == '__main__':
                         type=float,
                         default=None,
                         help='map extent')
+    parser.add_argument('--cbar_only',
+                        nargs=2,
+                        metavar='XY XY',
+                        type=float,
+                        default=None,)
+    parser.add_argument('--cbar_label',
+                        type=str,
+                        default='',)
+    parser.add_argument('--scale_factor',
+                        type=float,
+                        default=1.0,)
+    parser.add_argument('--stats',
+                        nargs='+',
+                        type=str,
+                        choices=['mean', 'sum', 'std'],
+                        default=[],)
     parser.add_argument('--region',
                         metavar='x0x1y0y1',
                         type=str,
-                        choices=['US', 'CA', 'global'],
+                        choices=['US', 'California', 'global'],
                         default='global',
                         help='map extent')
+    parser.add_argument('--shapefiles',
+                        type=str,
+                        default='/home/liam/Downloads')
     parser.add_argument('--crs',
                         metavar='CRS',
                         type=str,
@@ -292,6 +311,17 @@ if __name__ == '__main__':
     else:
         norm = plt.Normalize(args['norm'][0], args['norm'][1])
 
+
+    if args['cbar_only']:
+        plt.figure(figsize=(args['cbar_only']))
+        ax = plt.axes()
+        cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(args['cmap']),
+                                        norm=norm,
+                                        orientation='horizontal')
+        cb.set_label(args['cbar_label'])
+        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
+        exit(0)
+
     # Open grid def file
     grid = xr.open_dataset(args['grid_def'])
 
@@ -303,22 +333,74 @@ if __name__ == '__main__':
             ax.set_global()
         else:
             ax.set_extent(args['extent'], ccrs.PlateCarree())
+        ax.coastlines(linewidth=0.5)
+        nf_range = range(6)
+        data_for_stats = da.values
     else:
-        raise NotImplementedError('Not yet here')
+        import maps
+        if args['region'] == 'California':
+            region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
+            stats_text_pos = dict(
+                x=0.7,
+                y=0.8,
+                horizontalalignment='left',
+                verticalalignment='top',
+            )
+        elif args['region'] == 'US':
+            region = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
+            stats_text_pos = dict(
+                x=0.03,
+                y=0.05,
+                horizontalalignment='left',
+                verticalalignment='bottom',
+            )
 
-    ax.coastlines(linewidth=0.5)
+        crs = ccrs.epsg(2163)
+        plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=8))
+        ax = plt.axes(projection=crs)
+        maps.set_extent(ax, region)
+        maps.features.format_page(ax, linewidth_axis_spines=0)
+        # ax.set_facecolor('white')
+        maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white')
+        # maps.features.add_polygons(ax, region, outline=True)
+        nf_range = [0, 1, 3, 4, 5]
 
-    for nf in range(6):
+        xc = grid['grid_boxes_centers'].isel(XY=0).values
+        yc = grid['grid_boxes_centers'].isel(XY=1).values
+        region_mask = maps.mask_outside(xc, yc, region.buffer(0.2).simplify(0.1))  # buffer of 0.2 deg
+        data_for_stats = da.values
+        data_for_stats[region_mask] = np.nan
 
-        xe = grid['xe'].isel(nf=nf).values
+
+    # Compute stats
+    stats = {}
+    for stat in args['stats']:
+        if stat == 'mean':
+            stats['mean'] = np.nanmean(data_for_stats)
+        elif stat == 'sum':
+            stats['sum'] = np.nansum(data_for_stats)
+        elif stat == 'std':
+            stats['std'] = np.nanstd(data_for_stats)
+
+
+    for nf in nf_range:
+        xe = grid['xe'].isel(nf=nf).values % 360
         ye = grid['ye'].isel(nf=nf).values
-        xc = grid['grid_boxes_centers'].isel(nf=nf, XY=0).values
+        xc = grid['grid_boxes_centers'].isel(nf=nf, XY=0).values % 360
         yc = grid['grid_boxes_centers'].isel(nf=nf, XY=1).values
         face_xy = get_minor_xy(xe % 360, ye)
         blocksize = determine_blocksize(face_xy, xc % 360, yc)
         # print(f'Block size for face {nf+1}: {blocksize}')
-        pcolormesh2(xe, ye, da.isel(nf=nf), blocksize, norm, cmap=args['cmap'])
+        pcolormesh2(xe, ye, da.isel(nf=nf) * args['scale_factor'], blocksize, norm, cmap=args['cmap'])
 
-    plt.colorbar(matplotlib.cm.ScalarMappable(norm, args['cmap']), orientation='horizontal')
-    plt.tight_layout()
-    plt.savefig(args['o'], dpi=300)
+    if len(stats) > 0:
+        plt.text(
+            s="\n".join([f"{stat_name}: {stat_value:4.2e}" for stat_name, stat_value in stats.items()]),
+            transform=ax.transAxes,
+            zorder=101,
+            **stats_text_pos
+        )
+
+    # plt.colorbar(matplotlib.cm.ScalarMappable(norm, args['cmap']), orientation='horizontal')
+    # plt.tight_layout()
+    plt.savefig(args['o'], dpi=300, bbox_inches='tight')

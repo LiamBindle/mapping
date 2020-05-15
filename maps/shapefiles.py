@@ -3,6 +3,8 @@ import numpy as np
 import geopandas
 import shapely.geometry
 
+from tqdm import tqdm
+
 def contiguous_states():
     return [
         "Alabama", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -71,10 +73,14 @@ def mask_outside(x, y, polygon: shapely.geometry.MultiPolygon):
     x_flat = x.flatten()
     y_flat = y.flatten()
     points = [shapely.geometry.Point(xp, yp) for xp, yp in zip(x_flat, y_flat)]
-    mask = np.array([polygon.envelope.contains(pt) for pt in points])
+    envelope = polygon.envelope
+    mask = np.array([envelope.contains(pt) for pt in points])
+    convex_hull = polygon.convex_hull
     for i in np.argwhere(mask):
+        mask[i.item()] = convex_hull.contains(points[i.item()])
+    for i in tqdm(np.argwhere(mask), desc='Region mask'):
         mask[i.item()] = polygon.contains(points[i.item()])
-    return mask.reshape(x.shape)
+    return ~mask.reshape(x.shape)
 
 
 if __name__ == '__main__':
