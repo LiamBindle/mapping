@@ -26,6 +26,10 @@ if __name__ == '__main__':
                         # default='/home/liam/Downloads/cb_2018_us_nation_20m.shp'
                         default='/home/liam/Downloads/tl_2017_us_state.shp'
                         )
+    parser.add_argument('-o',
+                        type=str,
+                        required=True
+                        )
     args = parser.parse_args()
 
     ds_tropomi = xr.open_dataset(args.tropomi)
@@ -114,4 +118,4 @@ if __name__ == '__main__':
 
     # gs.tight_layout(fig)
     plt.tight_layout()
-    plt.show()
+    plt.savefig(args['o'],  dpi=300, bbox_inches='tight')
