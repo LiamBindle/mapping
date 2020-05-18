@@ -49,8 +49,8 @@ if __name__ == '__main__':
                         )
     args = vars(parser.parse_args())
 
-    x_da = xr.open_dataset(args['xfile'])[args['xvar']]
-    y_da = xr.open_dataset(args['yfile'])[args['yvar']]
+    x_da = xr.open_dataset(args['xfile'])[args['xvar']].squeeze()
+    y_da = xr.open_dataset(args['yfile'])[args['yvar']].squeeze()
     grid = xr.open_dataset(args['grid_def'])
 
 
