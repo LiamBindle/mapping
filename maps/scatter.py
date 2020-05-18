@@ -47,7 +47,7 @@ if __name__ == '__main__':
                         type=str,
                         required=True
                         )
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
 
     x_da = xr.open_dataset(args['xfile'])[args['xvar']]
     y_da = xr.open_dataset(args['yfile'])[args['yvar']]
