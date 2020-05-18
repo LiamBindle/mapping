@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # q50_z = np.quantile(z, 0.7)
     # z = [1 if zz > q50_z and abs(xx-yy)/yy > 0.5 and yy > 13 else 0 for xx, yy, zz in zip(x, y, z)]
 
-    ax.scatter(x, y, c=z, s=80, edgecolor='', cmap='jet', marker='.')
+    ax.scatter(x, y, c=z, s=120, edgecolor='', cmap='jet', marker='.')
 
     ax.margins(0.05)
     limits = [*ax.get_xlim(), *ax.get_ylim()]
