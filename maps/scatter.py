@@ -15,54 +15,64 @@ from tqdm import tqdm
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tropomi',
+    parser.add_argument('--xfile',
                         type=str,
                         required=True)
-    parser.add_argument('--gchp',
+    parser.add_argument('--xvar',
                         type=str,
                         required=True)
-    parser.add_argument('--shapefile',
+    parser.add_argument('--yfile',
                         type=str,
-                        # default='/home/liam/Downloads/cb_2018_us_nation_20m.shp'
-                        default='/home/liam/Downloads/tl_2017_us_state.shp'
-                        )
+                        required=True)
+    parser.add_argument('--yvar',
+                        type=str,
+                        required=True)
+    parser.add_argument('--grid_def',
+                        type=str,
+                        required=True)
+    parser.add_argument('--region',
+                        type=str,
+                        required=False)
+    parser.add_argument('--name',
+                        type=str,
+                        required=False,
+                        default='')
     parser.add_argument('-o',
                         type=str,
                         required=True
                         )
     args = parser.parse_args()
 
-    ds_tropomi = xr.open_dataset(args.tropomi)
-    ds_gchp = xr.open_dataset(args.gchp)
+    x_da = xr.open_dataset(args['xfile'])[args['xvar']]
+    y_da = xr.open_dataset(args['yfile'])[args['yvar']]
+    grid = xr.open_dataset(args['grid_def'])
 
-    lats = ds_gchp.lats.values.flatten()
-    lons = ds_gchp.lons.values.flatten()
 
-    shapefile = geopandas.read_file(args.shapefile)
-    region = shapefile.loc[shapefile['NAME'] == 'California'].iloc[0].geometry
-    # region = shapefile.iloc[0].geometry  # US
+    if args['region'] == 'global':
+        pass
+    else:
+        import maps
+        if args['region'] == 'California':
+            region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
+        elif args['region'] == 'US':
+            region = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
+
+        xc = grid['grid_boxes_centers'].isel(XY=0).values
+        yc = grid['grid_boxes_centers'].isel(XY=1).values
+        region_mask = maps.mask_outside(xc, yc, region.buffer(0.2).simplify(0.1))  # buffer of 0.2 deg
+        x_da[region_mask] = np.nan
+        y_da[region_mask] = np.nan
 
     plt.figure()
     ax = plt.gca()
     # ax.axis('equal')
 
-    x = ds_tropomi['TROPOMI_NO2'].values.flatten()
-    y = ds_gchp['GCHP_NO2'].values.flatten()
+    x = x_da.values.flatten()
+    y = y_da.values.flatten()
 
     mask = np.isfinite(x)
     x = x[mask]
     y = y[mask]
-
-    lats = lats[mask]
-    lons = lons[mask]
-
-    import maps.shapefiles
-    foo = maps.shapefiles.mask_outside(lons, lats, region)
-
-    inside_region = [region.contains(shapely.geometry.Point(xp, yp)) for xp, yp in tqdm(zip(lons, lats), total=lats.size)]
-
-    x = x[inside_region]
-    y = y[inside_region]
 
     xy = np.vstack([x, y])
     z = gaussian_kde(xy)(xy)
@@ -70,7 +80,7 @@ if __name__ == '__main__':
     # q50_z = np.quantile(z, 0.7)
     # z = [1 if zz > q50_z and abs(xx-yy)/yy > 0.5 and yy > 13 else 0 for xx, yy, zz in zip(x, y, z)]
 
-    ax.scatter(x, y, c=z, s=50, edgecolor='', cmap='jet', marker='.')
+    ax.scatter(x, y, c=z, s=20, edgecolor='', cmap='jet', marker='.')
 
     ax.margins(0.05)
     limits = [*ax.get_xlim(), *ax.get_ylim()]
@@ -95,7 +105,7 @@ if __name__ == '__main__':
     ax.set_ylabel(f'Simulated')
     ax.text(
         0.05, 0.95,
-        'GCHP (updated NEI11) reduced by 40% vs TROPOMI',
+        args['name'],
         transform=ax.transAxes,
         horizontalalignment='left',
         verticalalignment='top',
