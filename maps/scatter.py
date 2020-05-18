@@ -31,8 +31,14 @@ if __name__ == '__main__':
                         type=str,
                         required=True)
     parser.add_argument('--region',
+                        metavar='x0x1y0y1',
                         type=str,
-                        required=False)
+                        choices=['US', 'California', 'global'],
+                        default='global',
+                        help='map extent')
+    parser.add_argument('--shapefiles',
+                        type=str,
+                        default='/home/liam/Downloads')
     parser.add_argument('--name',
                         type=str,
                         required=False,
