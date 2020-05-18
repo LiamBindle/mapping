@@ -66,8 +66,8 @@ if __name__ == '__main__':
         xc = grid['grid_boxes_centers'].isel(XY=0).values
         yc = grid['grid_boxes_centers'].isel(XY=1).values
         region_mask = maps.mask_outside(xc, yc, region.buffer(0.2).simplify(0.1))  # buffer of 0.2 deg
-        x_da[region_mask] = np.nan
-        y_da[region_mask] = np.nan
+        x_da.values[region_mask] = np.nan
+        y_da.values[region_mask] = np.nan
 
     plt.figure()
     ax = plt.gca()
