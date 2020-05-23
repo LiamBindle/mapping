@@ -76,9 +76,9 @@ def mask_outside(x, y, polygon: shapely.geometry.MultiPolygon):
     envelope = polygon.envelope
     mask = np.array([envelope.contains(pt) for pt in points])
     convex_hull = polygon.convex_hull
-    for i in np.argwhere(mask):
+    for i in tqdm(np.argwhere(mask), desc='Region mask (1/2)'):
         mask[i.item()] = convex_hull.contains(points[i.item()])
-    for i in tqdm(np.argwhere(mask), desc='Region mask'):
+    for i in tqdm(np.argwhere(mask), desc='Region mask (2/2)'):
         mask[i.item()] = polygon.contains(points[i.item()])
     return ~mask.reshape(x.shape)
 
