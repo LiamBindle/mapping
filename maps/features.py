@@ -41,7 +41,7 @@ def tiger_roads(ax, tiger_path, rttyp=('U', 'I'), **add_feature_kwargs):
     extent = shapely.geometry.Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
 
     for record in reader.records():
-        if record.attributes['RTTYP'] in rttyp and extent.intersects(record.geometry):
+        if record.attributes['RTTYP'] in rttyp: #and extent.intersects(record.geometry) or extent.contains(record.geometry):
             geometries.append(record.geometry)
 
     add_feature_kwargs.setdefault('facecolor', 'none')
@@ -51,6 +51,15 @@ def tiger_roads(ax, tiger_path, rttyp=('U', 'I'), **add_feature_kwargs):
         cartopy.feature.ShapelyFeature(geometries, crs=ccrs.PlateCarree()),
         **add_feature_kwargs
     )
+
+def add_roads(ax, shapefile_paths, **kwargs):
+    roads = maps.find_shapefile(shapefile_paths, "tiger_roads")
+    tiger_roads(ax, roads, **kwargs)
+
+
+def add_hills(ax, shapefile_paths, **kwargs):
+    sr = maps.find_shapefile(shapefile_paths, "naturalearth_sr")
+    shaded_hills(ax, sr)
 
 
 def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=False, exterior=False, exterior_thresh=0.0005, **add_feature_kwargs):
