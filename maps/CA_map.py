@@ -31,10 +31,10 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--norm',
                         type=float,
                         nargs=2,
-                        default=None,)
+                        default=[0.7e15, 3.7e15],)
     parser.add_argument('--cmap',
                         type=str,
-                        default='cividis',)
+                        default='Oranges',)
     parser.add_argument('--grid_def',
                         type=str,
                         required=True)
@@ -176,17 +176,6 @@ if __name__ == '__main__':
     ymin, ymax = ye.min().item(), ye.max().item()
 
     plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
-    # plt.pcolormesh(xe, ye, da, norm=norm, cmap=args['cmap'])
 
-    # if len(stats) > 0:
-    #     plt.text(
-    #         s="\n".join([args['name'], *[f"{stat_name}: {stat_value:4.2e}" for stat_name, stat_value in stats.items()]]),
-    #         transform=ax.transAxes,
-    #         zorder=101,
-    #         **stats_text_pos
-    #     )
-
-    # plt.colorbar(matplotlib.cm.ScalarMappable(norm, args['cmap']), orientation='horizontal')
-    # plt.tight_layout()
     # plt.savefig(args['o'], dpi=300, bbox_inches='tight')
     plt.show()

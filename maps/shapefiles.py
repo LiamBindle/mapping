@@ -21,9 +21,11 @@ def contiguous_states():
 filename_lookup = {
     'tiger_states': ['tl_2017_us_state.shp', 'tl_2017_us_state/tl_2017_us_state.shp'],
     'tiger_roads': ['tl_2016_us_primaryroads.shp', 'tl_2016_us_primaryroads/tl_2016_us_primaryroads.shp'],
+    'tiger_counties': ['tl_2016_06_cousub.shp', 'tl_2016_06_cousub/tl_2016_06_cousub.shp'],
     'naturalearth_sr': ['SR_LR.tif', 'SR_LR/SR_LR.tif'],
     'naturalearth_countries': ['ne_10m_admin_0_map_subunits.shp', 'ne_10m_admin_0_map_subunits/ne_10m_admin_0_map_subunits.shp'],
-    'naturalearth_states': ['ne_10m_admin_1_states_provinces.shp', 'ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp']
+    'naturalearth_states': ['ne_10m_admin_1_states_provinces.shp', 'ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp'],
+    'ca_air_basins': ['CaAirBasin.shp', 'CaAirBasin/CaAirBasin.shp']
 }
 
 def find_shapefile(shapefile_paths: list, item_name):
@@ -67,6 +69,19 @@ def tiger_states_to_contiguous_us(tiger_states, simplify_tolerance=0.01):
         return contiguous_us.simplify(simplify_tolerance)
     else:
         return contiguous_us
+
+
+def get_california_counties(shapefile_paths: list):
+    shapefile = find_shapefile(shapefile_paths, "tiger_counties")
+    df = geopandas.read_file(shapefile).set_index('NAME')
+    return df
+
+
+def get_california_air_basins(shapefile_paths: list):
+    shapefile = find_shapefile(shapefile_paths, "ca_air_basins")
+    df = geopandas.read_file(shapefile).set_index('NAME')
+    return df
+
 
 
 def mask_outside(x, y, polygon: shapely.geometry.MultiPolygon):
