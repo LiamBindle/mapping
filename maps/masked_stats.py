@@ -13,6 +13,7 @@ import pyproj
 from shapely.ops import transform
 from tqdm import tqdm
 import pandas as pd
+import scipy.stats
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -74,6 +75,7 @@ if __name__ == '__main__':
         df.at[name, 'MAE'] = sklearn.metrics.mean_absolute_error(x, y)
         df.at[name, 'RMSE'] = np.sqrt(sklearn.metrics.mean_squared_error(x, y))
         df.at[name, 'R2']= sklearn.metrics.r2_score(x, y)
+        df.at[name, 'R'] = scipy.stats.pearsonr(x, y)
         df.at[name, 'STD_X'] = np.std(x)
         df.at[name, 'STD_Y'] = np.std(y)
         df.at[name, 'MEAN_X'] = np.mean(x)
