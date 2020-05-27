@@ -34,6 +34,10 @@ if __name__ == '__main__':
     parser.add_argument('--shapefiles',
                         type=str,
                         default='/home/liam/Downloads')
+    parser.add_argument('-o',
+                        type=str,
+                        required=True
+                        )
     args = vars(parser.parse_args())
 
     x_da = xr.open_dataset(args['xfile'])[args['xvar']].squeeze()
@@ -76,4 +80,4 @@ if __name__ == '__main__':
         df.at[name, 'MEAN_Y'] = np.mean(y)
 
     print(df)
-    df.to_csv('region_stats.csv')
+    df.to_csv(args['o'])

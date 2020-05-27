@@ -139,6 +139,6 @@ if __name__ == '__main__':
     )
 
     # gs.tight_layout(fig)
-    plt.tight_layout()
-    # plt.savefig(args['o'],  dpi=300, bbox_inches='tight')
+    # plt.tight_layout()
+    plt.savefig(args['o'],  dpi=300, bbox_inches='tight')
     plt.show()
