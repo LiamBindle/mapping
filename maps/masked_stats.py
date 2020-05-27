@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     xc, yc = project(xc, yc)
 
-    df = pd.DataFrame(index=regions.index, columns=['MB', 'MAE', 'RMSE', 'R2', 'STD_X', 'STD_Y', 'MEAN_X', 'MEAN_Y'])
+    df = pd.DataFrame(index=regions.index, columns=['MB', 'MAE', 'RMSE', 'R2', 'STD_X', 'STD_Y', 'MEAN_X', 'MEAN_Y', 'R'])
 
     regions = regions.to_crs('epsg:2163')
 
