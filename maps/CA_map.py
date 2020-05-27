@@ -31,16 +31,13 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--norm',
                         type=float,
                         nargs=2,
-                        default=[0.7e15, 3.7e15],)
+                        default=[0.2e15, 3.7e15],)
     parser.add_argument('--cmap',
                         type=str,
                         default='Oranges',)
     parser.add_argument('--grid_def',
                         type=str,
                         required=True)
-    parser.add_argument('--width',
-                        type=float,
-                        default=8)
     parser.add_argument('--cbar_only',
                         nargs=2,
                         metavar='XY XY',
@@ -86,7 +83,8 @@ if __name__ == '__main__':
             horizontalalignment='left',
             verticalalignment='top',
         )
-        road_params = dict(linewidth=0.5,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
+        road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
+        width=1.575
     elif args['region'] == 'US':
         region = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
         stats_text_pos = dict(
@@ -95,10 +93,11 @@ if __name__ == '__main__':
             horizontalalignment='left',
             verticalalignment='bottom',
         )
-        road_params = dict(linewidth=0.6,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9))
+        road_params = dict(linewidth=0.2,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9))
+        width=4.724
 
     crs = ccrs.epsg(2163)
-    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=args['width']))
+    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width))
     ax = plt.axes(projection=crs)
     maps.set_extent(ax, region)
     maps.features.format_page(ax, linewidth_axis_spines=0)
@@ -177,5 +176,5 @@ if __name__ == '__main__':
 
     plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
-    # plt.savefig(args['o'], dpi=300, bbox_inches='tight')
-    plt.show()
+    plt.savefig(args['o'], dpi=300, bbox_inches='tight', pad_inches=0.01)
+    # plt.show()
