@@ -2,6 +2,7 @@ import os.path
 import numpy as np
 import geopandas
 import shapely.geometry
+import pyproj
 
 from tqdm import tqdm
 
@@ -21,11 +22,13 @@ def contiguous_states():
 filename_lookup = {
     'tiger_states': ['tl_2017_us_state.shp', 'tl_2017_us_state/tl_2017_us_state.shp'],
     'tiger_roads': ['tl_2016_us_primaryroads.shp', 'tl_2016_us_primaryroads/tl_2016_us_primaryroads.shp'],
-    'tiger_counties': ['tl_2016_06_cousub.shp', 'tl_2016_06_cousub/tl_2016_06_cousub.shp'],
+    #'tiger_counties': ['tl_2016_06_cousub.shp', 'tl_2016_06_cousub/tl_2016_06_cousub.shp'],
+    'tiger_counties': ['CA_Counties_TIGER2016.shp', 'CA_Counties/CA_Counties_TIGER2016.shp'],
     'naturalearth_sr': ['SR_LR.tif', 'SR_LR/SR_LR.tif'],
     'naturalearth_countries': ['ne_10m_admin_0_map_subunits.shp', 'ne_10m_admin_0_map_subunits/ne_10m_admin_0_map_subunits.shp'],
     'naturalearth_states': ['ne_10m_admin_1_states_provinces.shp', 'ne_10m_admin_1_states_provinces/ne_10m_admin_1_states_provinces.shp'],
-    'ca_air_basins': ['CaAirBasin.shp', 'CaAirBasin/CaAirBasin.shp']
+    'ca_air_basins': ['CaAirBasin.shp', 'CaAirBasin/CaAirBasin.shp'],
+    'central_valley': ['cvhm_texture_regions.shp', 'cvhm_texture_regions/cvhm_texture_regions.shp']
 }
 
 def find_shapefile(shapefile_paths: list, item_name):
@@ -71,10 +74,58 @@ def tiger_states_to_contiguous_us(tiger_states, simplify_tolerance=0.01):
         return contiguous_us
 
 
-def get_california_counties(shapefile_paths: list):
+def central_valley(shapefile_paths):
+    shapefile = find_shapefile(shapefile_paths, "central_valley")
+    df = geopandas.read_file(shapefile)
+    proj = pyproj.Transformer.from_proj(pyproj.Proj('+proj=aea +lat_0=23 +lon_0=-120 +lat_1=29.5 +lat_2=45.5 +units=m'), pyproj.Proj('epsg:4326'), always_xy=True).transform
+    shape = shapely.ops.unary_union(df.geometry)
+    shape = shapely.geometry.Polygon(shapely.ops.transform(proj, shape).buffer(0.01).exterior) #.convex_hull
+    return shape
+
+
+def get_california_counties(shapefile_paths: list, north_central_sout=False):
     shapefile = find_shapefile(shapefile_paths, "tiger_counties")
     df = geopandas.read_file(shapefile).set_index('NAME')
-    return df
+
+    if north_central_sout:
+        northern = [
+            "Butte", "Colusa", "Del Norte", "Glenn", "Humboldt", "Lake", "Lassen", "Mendocino", "Modoc", "Plumas", "Shasta", "Siskiyou", "Tehama", "Trinity",
+            "Amador", "El Dorado", "Marin", "Napa", "Nevada", "Placer", "Sacramento", "Sierra", "Solano", "Sonoma", "Sutter", "Yolo", "Yuba"
+        ] # 14 + 13
+        central = [
+            "Alameda", "Contra Costa", "Monterey", "San Benito", "San Francisco", "San Mateo", "Santa Clara", "Santa Cruz",
+            "Alpine", "Calaveras", "Fresno", "Inyo", "Kings",  "Kern", "Madera", "Mariposa", "Merced", "Mono", "San Joaquin", "Stanislaus", "Tulare", "Tuolumne",
+            "San Luis Obispo", "Santa Barbara"
+        ] # 8 + 14 + 2
+        southern = [
+            "Los Angeles", "Ventura",
+            "Imperial", "Orange", "Riverside", "San Bernardino", "San Diego"
+        ] # 2 + 5
+
+        df = df.to_crs('epsg:4326')
+
+        # US = get_countries(shapefile_paths).to_crs('epsg:4326').loc['United States of America'].geometry
+        import shapely.ops
+
+        def list_to_polygon(counties, req_len):
+            subdf = df[df.index.isin(counties)]
+            assert len(subdf) == req_len
+            return shapely.ops.unary_union(subdf.geometry)
+            # geometries = []
+            # for p in subdf.geometry.to_list():
+            #     if isinstance(p, shapely.geometry.MultiPolygon):
+            #         for subp in p:
+            #             if US.intersects(subp):
+            #                 geometries.append(subp)
+            #     else:
+            #         geometries.append(p)
+            # return shapely.geometry.MultiPolygon(geometries).convex_hull
+        norther_counties = list_to_polygon(northern, 27)
+        central_counties = list_to_polygon(central, 24)
+        southern_counties = list_to_polygon(southern, 7)
+        return norther_counties, central_counties, southern_counties
+    else:
+        return df
 
 
 def get_california_air_basins(shapefile_paths: list):
@@ -107,9 +158,9 @@ if __name__ == '__main__':
     import cartopy.crs as ccrs
 
     shp = get_countries('/home/liam/Downloads/')
-    region = shp.loc['United States of America'].geometry
-    # shp = get_provinces_and_states('/home/liam/Downloads/')
-    # region = shp.loc['California'].geometry
+    # region = shp.loc['United States of America'].geometry
+    shp = get_provinces_and_states('/home/liam/Downloads/')
+    region = shp.loc['California'].geometry
 
     fig = plt.figure(figsize=maps.figsize_fitting_polygon(region, projection=ccrs.epsg(2163)))
     ax = plt.axes(projection=ccrs.epsg(2163))
@@ -123,6 +174,10 @@ if __name__ == '__main__':
     # region = region.envelope.buffer(100)
     # for p in poly:
     #     region = region.difference(p)
+
+    valley = central_valley('/home/liam/Downloads/')
+
+    maps.add_polygons(ax, valley, outline=True)
 
     maps.features.add_polygons(ax, region, exterior=True)
     plt.tight_layout()

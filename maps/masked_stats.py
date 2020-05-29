@@ -59,9 +59,16 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(index=regions.index, columns=['MB', 'MAE', 'RMSE', 'R2', 'STD_X', 'STD_Y', 'MEAN_X', 'MEAN_Y', 'R'])
 
-    regions = regions.to_crs('epsg:2163')
+    valley = maps.central_valley(args['shapefiles'])
+    north, central, south = maps.get_california_counties(args['shapefiles'], north_central_sout=True)
 
-    for name, region in zip(regions.index, regions.geometry):
+    # regions = regions.to_crs('epsg:2163')
+    north = shapely.ops.transform(project, north)
+    central = shapely.ops.transform(project, central)
+    south = shapely.ops.transform(project, south)
+    valley = shapely.ops.transform(project, valley)
+
+    for name, region in zip(['North', 'Central', 'South', 'Central Valley'], [north, central, south, valley]):
         print(name)
         mask = maps.mask_outside(xc, yc, region)
 
@@ -82,4 +89,5 @@ if __name__ == '__main__':
         df.at[name, 'MEAN_Y'] = np.mean(y)
 
     print(df)
+    df = df[df.index.isin(['North', 'Central', 'South', 'Central Valley'])]
     df.to_csv(args['o'])
