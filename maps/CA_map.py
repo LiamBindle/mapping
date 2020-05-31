@@ -54,6 +54,8 @@ if __name__ == '__main__':
     parser.add_argument('--name',
                         type=str,
                         default='',)
+    parser.add_argument('--titles',
+                        action='store_true')
     parser.add_argument('--region',
                         type=str,
                         choices=['US', 'California'],
@@ -166,6 +168,28 @@ if __name__ == '__main__':
                                               norm=norm,
                                               orientation='horizontal')
         cb.set_label(args['cbar_label'])
+        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
+        exit(0)
+
+    if args['titles']: # --cbar_only 4.724 0.2 --cbar_label "NO$_2$ column density, [molec cm-2]"
+        plt.figure(figsize=(4.724, 0.05))
+        ax = plt.axes()
+        plt.text(
+            x=1/6-0.8/6, y=0.5, s="TROPOMI",
+            horizontalalignment='center',
+            verticalalignment='center',
+        )
+        plt.text(
+            x=3/6-0.8/6, y=0.5, s="CTL",
+            horizontalalignment='center',
+            verticalalignment='center',
+        )
+        plt.text(
+            x=5/6-0.8/6, y=0.5, s="C900e-CA",
+            horizontalalignment='center',
+            verticalalignment='center',
+        )
+        plt.axis('off')
         plt.savefig(args['o'], dpi=300, bbox_inches='tight')
         exit(0)
 
