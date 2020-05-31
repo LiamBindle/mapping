@@ -78,7 +78,7 @@ if __name__ == '__main__':
     if args['region'] == 'California':
         region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
         text_kwargs = dict(
-            x=0.01,
+            x=0.03,
             y=0.03,
             horizontalalignment='left',
             verticalalignment='bottom',
