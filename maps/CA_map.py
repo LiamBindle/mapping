@@ -62,7 +62,7 @@ if __name__ == '__main__':
                         type=str,
                         default='/home/liam/Downloads')
     args = vars(parser.parse_args())
-    plt.rc('text', usetex=False)
+    # plt.rc('text', usetex=False)
 
     ds = xr.open_dataset(args['filein'])
 
@@ -77,19 +77,19 @@ if __name__ == '__main__':
     import maps
     if args['region'] == 'California':
         region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
-        stats_text_pos = dict(
-            x=0.5,
-            y=0.75,
+        text_kwargs = dict(
+            x=0.01,
+            y=0.03,
             horizontalalignment='left',
-            verticalalignment='top',
+            verticalalignment='bottom',
         )
         road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
         width=1.575
     elif args['region'] == 'US':
         region = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
-        stats_text_pos = dict(
-            x=0.03,
-            y=0.05,
+        text_kwargs = dict(
+            x=0,
+            y=0.04,
             horizontalalignment='left',
             verticalalignment='bottom',
         )
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     else:
         norm = plt.Normalize(args['norm'][0], args['norm'][1])
 
-    if args['cbar_only']:
+    if args['cbar_only']: # --cbar_only 4.724 0.2 --cbar_label "NO$_2$ column density, [molec cm-2]"
         plt.figure(figsize=(args['cbar_only']))
         ax = plt.axes()
         cb = matplotlib.colorbar.ColorbarBase(ax, cmap=cmap,
@@ -173,6 +173,9 @@ if __name__ == '__main__':
 
     xmin, xmax = xe.min().item(), xe.max().item()
     ymin, ymax = ye.min().item(), ye.max().item()
+
+
+    plt.text(s=args['name'], transform=ax.transAxes, zorder=101, fontsize='x-small', **text_kwargs)
 
     plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
