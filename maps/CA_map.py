@@ -77,19 +77,19 @@ if __name__ == '__main__':
     import maps
     if args['region'] == 'California':
         region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
-        text_kwargs = dict(
-            x=0.03,
-            y=0.03,
+        stats_text_pos = dict(
+            x=0.5,
+            y=0.75,
             horizontalalignment='left',
-            verticalalignment='bottom',
+            verticalalignment='top',
         )
         road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
         width=1.575
     elif args['region'] == 'US':
         region = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
-        text_kwargs = dict(
-            x=0,
-            y=0.04,
+        stats_text_pos = dict(
+            x=0.03,
+            y=0.05,
             horizontalalignment='left',
             verticalalignment='bottom',
         )
@@ -173,9 +173,6 @@ if __name__ == '__main__':
 
     xmin, xmax = xe.min().item(), xe.max().item()
     ymin, ymax = ye.min().item(), ye.max().item()
-
-
-    plt.text(s=args['name'], transform=ax.transAxes, zorder=101, fontsize='x-small', **text_kwargs)
 
     plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
