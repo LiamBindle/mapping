@@ -83,6 +83,22 @@ def central_valley(shapefile_paths):
     return shape
 
 
+def central_basins(shapefile_paths):
+    df = get_california_air_basins(shapefile_paths)
+    df = df[df.index.isin(['San Francisco Bay', 'Mountain Counties', 'San Joaquin Valley', 'Sacramento Valley'])].to_crs('epsg:2163')
+    return shapely.ops.unary_union(df.geometry)
+
+
+def central_valley_and_bay_area(shapefile_paths):
+    valley = central_valley(shapefile_paths)
+    valley = shapely.ops.transform(pyproj.Transformer.from_crs('epsg:4326', 'epsg:2163', always_xy=True).transform, valley)
+    bay_area = get_california_air_basins(shapefile_paths).to_crs('epsg:2163').loc['San Francisco Bay'].geometry
+
+    connectors = get_california_counties(shapefile_paths).loc[['Yolo', 'Sacramento', 'San Joaquin', 'Stanislaus', 'Merced']].to_crs('epsg:2163').geometry
+
+    area = shapely.geometry.Polygon(shapely.ops.unary_union([bay_area, valley, *connectors]).buffer(1000).exterior)
+    return area #[bay_area, valley, *connectors]
+
 def get_california_counties(shapefile_paths: list, north_central_sout=False):
     shapefile = find_shapefile(shapefile_paths, "tiger_counties")
     df = geopandas.read_file(shapefile).set_index('NAME')
@@ -175,9 +191,12 @@ if __name__ == '__main__':
     # for p in poly:
     #     region = region.difference(p)
 
-    valley = central_valley('/home/liam/Downloads/')
-
-    maps.add_polygons(ax, valley, outline=True)
+    # valley = central_valley('/home/liam/Downloads/')
+    # foo = central_valley_and_bay_area('/home/liam/Downloads')
+    # foo = central_valley('/home/liam/Downloads')
+    foo = maps.get_california_air_basins('/home/liam/Downloads').to_crs('epsg:2163').to_crs('epsg:4326').loc['San Francisco Bay'].geometry
+    # maps.add_polygons(ax, valley, outline=True)
+    maps.add_polygons(ax, foo, outline=True, crs=ccrs.PlateCarree())
 
     maps.features.add_polygons(ax, region, exterior=True)
     plt.tight_layout()

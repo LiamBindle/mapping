@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # ax.set_ylim([0, 1e15])
 
     # fnames = ['c180.csv', 'c900.csv'] #['/home/liam/Downloads/bar/C180-global/masked_stats.csv', '/home/liam/Downloads/bar/C900e-CA/masked_stats.csv']
-    fnames = ['/home/liam/Downloads/foobar/C180-global/masked_stats.csv', '/home/liam/Downloads/foobar/C900e-CA/masked_stats.csv'] #['/home/liam/Downloads/bar/C180-global/masked_stats.csv', '/home/liam/Downloads/bar/C900e-CA/masked_stats.csv']
+    fnames = ['/home/liam/Downloads/foobar/C180-global.csv', '/home/liam/Downloads/foobar/C900e-CA.csv'] #['/home/liam/Downloads/bar/C180-global/masked_stats.csv', '/home/liam/Downloads/bar/C900e-CA/masked_stats.csv']
 
     # fnames = ['/home/liam/Downloads/bar/C180-global/masked_stats.csv', '/home/liam/Downloads/bar/C900e-CA/masked_stats.csv']
 

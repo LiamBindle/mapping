@@ -18,6 +18,22 @@ import sklearn.metrics
 
 import scipy.stats
 
+
+def setup_axes():
+    region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
+
+    crs = ccrs.epsg(2163)
+    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=2.362))
+    ax = plt.axes(projection=crs)
+    maps.set_extent(ax, region)
+    maps.features.format_page(ax, linewidth_axis_spines=0)
+    maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white')
+    # maps.features.add_polygons(ax, region, outline=True, zorder=100, edgecolor='black', linewidth=0.8)
+    maps.add_roads(ax, args['shapefiles'], linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
+    maps.add_hills(ax, args['shapefiles'])
+    return ax
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--xfile',
@@ -49,16 +65,6 @@ if __name__ == '__main__':
     grid = xr.open_dataset(args['grid_def'])
 
     region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
-
-    crs = ccrs.epsg(2163)
-    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=1.575))
-    ax = plt.axes(projection=crs)
-    maps.set_extent(ax, region)
-    maps.features.format_page(ax, linewidth_axis_spines=0)
-    maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white')
-    # maps.features.add_polygons(ax, region, outline=True, zorder=100, edgecolor='black', linewidth=0.8)
-    maps.add_roads(ax, args['shapefiles'], linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
-    maps.add_hills(ax, args['shapefiles'])
 
 
     xc = grid['grid_boxes_centers'].isel(XY=0).values
@@ -120,24 +126,10 @@ if __name__ == '__main__':
             valid=np.isfinite(x)
             r2[i, j] = sklearn.metrics.r2_score(x[valid], y[valid], sample_weight=weights[valid])
 
-            # r[i, j], p[i, j] = scipy.stats.pearsonr(x[w], y[w])
-            # r[i, j] = corr(x[valid], y[valid], w[valid])
-            #
-            #
-
-
-            # mean_x[i, j] = np.nanmean(x[w])
-            # mean_y[i, j] = np.nanmean(y[w])
-            #
-            # std_x[i, j] = np.nanstd(x[w])
-            # std_y[i, j] = np.nanstd(y[w])
-
             mean_x[i, j] = np.average(x[valid], weights=weights[valid])
             mean_y[i, j] = np.average(y[valid], weights=weights[valid])
             std_x[i, j] = np.sqrt(np.cov(x[valid], aweights=weights[valid]))
             std_y[i, j] = np.sqrt(np.cov(y[valid], aweights=weights[valid]))
-
-    # e=np.sqrt(std_x**2+std_y**2-2*std_x*std_y*r) / std_x
 
     ic_slice = slice(max(0, imin), min(grid.dims['i'], imax))
     jc_slice = slice(max(0, jmin), min(grid.dims['j'], jmax))
@@ -149,39 +141,54 @@ if __name__ == '__main__':
     xmin, xmax = xe.min().item(), xe.max().item()
     ymin, ymax = ye.min().item(), ye.max().item()
 
-    #bad = p[ic_slice, jc_slice].transpose()[::-1,:] > 0.05 # True where not sig
-
-    # bad = std_x[ic_slice, jc_slice].transpose()[::-1,:] < 0.2e15
     std = std_x[ic_slice, jc_slice].transpose()[::-1,:]
 
     cv = std_x[ic_slice, jc_slice].transpose()[::-1,:]/mean_x[ic_slice, jc_slice].transpose()[::-1,:]
 
     # dat = r[ic_slice, jc_slice].transpose()[::-1,:]
 
-    dat = r2[ic_slice, jc_slice].transpose()[::-1,:]
-    dat[std < 0.15e15] = np.nan
 
-    #_, central, _ = maps.get_california_counties('/home/liam/Downloads/', True)
-    valley = maps.central_valley('/home/liam/Downloads/')
+    data_r2 = r2[ic_slice, jc_slice].transpose()[::-1,:]
+    data_r2[std < 0.15e15] = np.nan
 
-    maps.add_polygons(ax, valley, outline=True)
+    data_mb = (mean_y[ic_slice, jc_slice].transpose()[::-1,:] - mean_x[ic_slice, jc_slice].transpose()[::-1,:]) / mean_x[ic_slice, jc_slice].transpose()[::-1,:]
 
-    # dat = (mean_y[ic_slice, jc_slice].transpose()[::-1,:] - mean_x[ic_slice, jc_slice].transpose()[::-1,:]) / mean_x[ic_slice, jc_slice].transpose()[::-1,:]
+    setup_axes()
+    plt.imshow(data_r2, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-1, 1), cmap='RdYlGn')
+    plt.savefig(f"{args['o']}/R2.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
 
+    setup_axes()
+    plt.imshow(data_mb, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-0.3, 0.3), cmap='RdBu_r')   # <-- this one
+    plt.savefig(f"{args['o']}/NMB.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
 
-    # plt.imshow(((mean_y-mean_x)/mean_x)[ic_slice, jc_slice].transpose()[::-1,:], extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-0.5, 0.5), cmap='RdBu_r')
+    plt.figure(figsize=(4.724-0.1, 0.2))
+    ax = plt.axes()
+    cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap('RdYlGn'),
+                                          norm=plt.Normalize(-1, 1),
+                                          orientation='horizontal')
+    cb.set_label('r$^{2}$ score')
+    plt.savefig(f"{args['o']}/R2-cbar.png", dpi=300, bbox_inches='tight', pad_inches=0.05)
 
-    # c = plt.imshow(dat, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-0.5, 0.5), cmap='RdBu_r')   # <-- this one
-    c = plt.imshow(dat, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-1, 1), cmap='RdYlGn')   # <-- this one
+    plt.figure(figsize=(4.724-0.1, 0.2))
+    ax = plt.axes()
+    cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap('RdBu_r'),
+                                          norm=plt.Normalize(-0.3, 0.3),
+                                          orientation='horizontal')
+    cb.set_label('Normalized mean bias')
+    plt.savefig(f"{args['o']}/NMB-cbar.png", dpi=300, bbox_inches='tight', pad_inches=0.05)
 
-    # c = plt.imshow(std, extent=[xmin, xmax, ymin, ymax],  norm=plt.Normalize(0, 0.3e15), cmap='RdYlGn')
-
-    # plt.imshow(np.ones_like(bad), extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(0, 1), cmap='Greys', alpha=bad.astype(float))
-    # c = plt.imshow(p[ic_slice, jc_slice].transpose()[::-1,:], extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(0, 0.01), cmap='RdYlGn_r')
-    plt.colorbar(c)
-    # plt.imshow(x_da[ic_slice, jc_slice].transpose()[::-1,:], extent=[xmin, xmax, ymin, ymax])
-    #
-    plt.savefig(args['o'], dpi=300, bbox_inches='tight', pad_inches=0.01)
-    # plt.show()
-
+    plt.figure(figsize=(4.724-0.1, 0.05))
+    ax = plt.axes()
+    plt.text(
+        x=1/4-0.5/4, y=0.5, s="CTL",
+        horizontalalignment='center',
+        verticalalignment='center',
+    )
+    plt.text(
+        x=3/4-0.5/4, y=0.5, s="C900e-CA",
+        horizontalalignment='center',
+        verticalalignment='center',
+    )
+    plt.axis('off')
+    plt.savefig(f"{args['o']}/titles.png", dpi=300, bbox_inches='tight', pad_inches=0.05)
 

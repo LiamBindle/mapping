@@ -68,7 +68,18 @@ if __name__ == '__main__':
     south = shapely.ops.transform(project, south)
     valley = shapely.ops.transform(project, valley)
 
-    for name, region in zip(['North', 'Central', 'South', 'Central Valley'], [north, central, south, valley]):
+    US = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
+    US = shapely.ops.transform(project, US)
+
+    central_basins = maps.central_basins(args['shapefiles'])
+    valley_and_bay = maps.central_valley_and_bay_area(args['shapefiles'])
+
+    names = [
+        'North', 'Central', 'South', 'Central Valley', 'Central Basins', 'Central Valley and Bay Area', 'US'
+    ]
+    regions = [north, central, south, valley, central_basins, valley_and_bay, US]
+
+    for name, region in zip(names, regions):
         print(name)
         mask = maps.mask_outside(xc, yc, region)
 
@@ -81,7 +92,7 @@ if __name__ == '__main__':
         df.at[name, 'MB'] = y.mean() - x.mean()
         df.at[name, 'MAE'] = sklearn.metrics.mean_absolute_error(x, y)
         df.at[name, 'RMSE'] = np.sqrt(sklearn.metrics.mean_squared_error(x, y))
-        df.at[name, 'R2']= sklearn.metrics.r2_score(x, y)
+        df.at[name, 'R2'] = sklearn.metrics.r2_score(x, y)
         df.at[name, 'R'], _ = scipy.stats.pearsonr(x, y)
         df.at[name, 'STD_X'] = np.std(x)
         df.at[name, 'STD_Y'] = np.std(y)
@@ -89,5 +100,5 @@ if __name__ == '__main__':
         df.at[name, 'MEAN_Y'] = np.mean(y)
 
     print(df)
-    df = df[df.index.isin(['North', 'Central', 'South', 'Central Valley'])]
+    df = df[df.index.isin(names)]
     df.to_csv(args['o'])
