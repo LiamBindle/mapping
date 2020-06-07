@@ -96,7 +96,7 @@ if __name__ == '__main__':
             verticalalignment='bottom',
         )
         road_params = dict(linewidth=0.2,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9))
-        width=4.724
+        width=3.26772
 
     crs = ccrs.epsg(2163)
     plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width))
