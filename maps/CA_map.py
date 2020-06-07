@@ -66,6 +66,12 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
     # plt.rc('text', usetex=False)
 
+    def save_fig():
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+                            hspace = 0, wspace = 0)
+        plt.margins(0,0)
+        plt.savefig(args['o'], dpi=300)
+
     ds = xr.open_dataset(args['filein'])
 
     for isel_k, isel_v in zip(args['isel'][::2], args['isel'][1::2]):
@@ -96,7 +102,7 @@ if __name__ == '__main__':
             verticalalignment='bottom',
         )
         road_params = dict(linewidth=0.2,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9))
-        width=3.26772
+        width=3.27
 
     crs = ccrs.epsg(2163)
     plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width))
@@ -168,7 +174,8 @@ if __name__ == '__main__':
                                               norm=norm,
                                               orientation='horizontal')
         cb.set_label(args['cbar_label'])
-        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
+        save_fig()
+        #plt.savefig(args['o'], dpi=300, bbox_inches='tight')
         exit(0)
 
     if args['titles']: # --cbar_only 4.724 0.2 --cbar_label "NO$_2$ column density, [molec cm-2]"
@@ -190,7 +197,8 @@ if __name__ == '__main__':
             verticalalignment='center',
         )
         plt.axis('off')
-        plt.savefig(args['o'], dpi=300, bbox_inches='tight')
+        save_fig()
+        #plt.savefig(args['o'], dpi=300, bbox_inches='tight')
         exit(0)
 
     xe, ye = grid.xe.values, grid.ye.values #pyproj.Transformer.from_crs('epsg:4326', 'epsg:2163', always_xy=True).transform(grid.xe, grid.ye)
@@ -200,5 +208,5 @@ if __name__ == '__main__':
 
     plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
-    plt.savefig(args['o'], dpi=300, bbox_inches='tight', pad_inches=0.01)
+    save_fig()
     # plt.show()
