@@ -86,14 +86,21 @@ def ufunc_multiply(x, M):
     return y
 
 
-def apply_tessellation(M, ds_in, ds_out_coords):
-    droppers = ['time', 'lats', 'lons']
+def apply_tessellation(M, ds_in, ds_out_coords, keep_only=[]):
+
+    droppers = ['cubed_sphere', 'contacts', 'orientation', 'anchor']
+    for d in droppers:
+        if d in ds_in:
+            ds_in = ds_in.drop(d)
+
+    if len(keep_only) > 0:
+        droppers = set(ds_in.data_vars.keys()) - set(keep_only)
+        ds_in = ds_in.drop(droppers)
+
+    droppers = ['time', 'lats', 'lons', 'ncontacts']
     for d in droppers:
         if d in ds_out_coords:
             del ds_out_coords[d]
-
-    if 'cubed_sphere' in ds_in:
-        ds_in = ds_in.drop('cubed_sphere')
 
     ds_in = ds_in.rename({'nf': 'nf_in', 'Xdim': 'Xdim_in', 'Ydim': 'Ydim_in'})
     ds_in.coords.update(ds_out_coords)
@@ -122,6 +129,77 @@ def apply_tessellation(M, ds_in, ds_out_coords):
     return ds
 
 
+# if __name__ == '__main__':
+#     import maps
+#     grid = xr.open_dataset('/extra-space/sg-stats/foo/grid_box_outlines_and_centers.nc')
+#     stacked_grid = grid.drop(['xe', 'ye', 'XdimE', 'YdimE']) \
+#         .stack(boxes=['nf', 'Ydim', 'Xdim']) \
+#         .transpose('boxes', 'POLYGON_PTS', 'XY')
+#     US = maps.get_countries('/home/liam/Downloads').loc['United States of America'].geometry.buffer(1).simplify(0.5)
+#     idx = mask(grid.grid_boxes_centers, US)
+#     inside = stacked_grid.grid_boxes.isel(boxes=idx)
+#     p = [shapely.geometry.Polygon(p) for p in inside.values]
+#     m = shapely.geometry.MultiPolygon(p)
+#     laea = pyproj.Proj(
+#         f'+proj=laea +lat_0={39.48} +lon_0={-98.38}  +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs'
+#     )
+#     latlon = pyproj.Proj('+init=epsg:4326')
+#     transform = pyproj.Transformer.from_proj(latlon, laea, always_xy=True).transform
+#     m2 = shapely.ops.transform(transform, m)
+#     p2 = list(m2)
+#     area = [f.area for f in p2]
+#     print(np.mean(area))
+#     exit(0)
+
+if __name__ == '__main__':
+    import maps
+
+    # Tessellates a->b
+    A_GRID='S48'
+    B_GRID='C96'
+
+    fname_ds_a_post = f'/extra-space/sg-stats/July/{A_GRID}/GCHP.SpeciesConc.July.{B_GRID}.nc'
+    ds_a = xr.open_dataset(f'/extra-space/sg-stats/July/{A_GRID}/GCHP.SpeciesConc.July.nc')
+    ds_b = xr.open_dataset(f'/extra-space/sg-stats/July/{B_GRID}/GCHP.SpeciesConc.July.nc')
+
+    grid_a = xr.open_dataset(f'/extra-space/sg-stats/July/{A_GRID}/grid_box_outlines_and_centers.nc')
+    grid_b = xr.open_dataset(f'/extra-space/sg-stats/July/{B_GRID}/grid_box_outlines_and_centers.nc')
+
+    stacked_grid_a = grid_a.drop(['xe', 'ye', 'XdimE', 'YdimE'])\
+        .stack(boxes=['nf', 'Ydim', 'Xdim'])\
+        .transpose('boxes', 'POLYGON_PTS', 'XY')
+    stacked_grid_b = grid_b.drop(['xe', 'ye', 'XdimE', 'YdimE']) \
+        .stack(boxes=['nf', 'Ydim', 'Xdim']) \
+        .transpose('boxes', 'POLYGON_PTS', 'XY')
+
+    US = maps.get_countries('/home/liam/Downloads').loc['United States of America'].geometry.buffer(1).simplify(0.5)
+
+    masked_stacked_indexes_a = mask(grid_a.grid_boxes_centers, US)
+    masked_stacked_indexes_b = mask(grid_b.grid_boxes_centers, US)
+
+    M = tessellate_a_to_b(
+        stacked_grid_a.grid_boxes.isel(boxes=masked_stacked_indexes_a),
+        stacked_grid_b.grid_boxes.isel(boxes=masked_stacked_indexes_b),
+    )
+
+    M = full_tessellation_matrix(
+        M,
+        masked_stacked_indexes_a,
+        masked_stacked_indexes_b,
+        stacked_grid_a.sizes['boxes'],
+        stacked_grid_b.sizes['boxes'],
+    )
+
+    odata = apply_tessellation(
+        M,
+        ds_a,
+        ds_b.coords
+    )
+
+    odata.to_netcdf(fname_ds_a_post)
+
+    print(odata)
+    exit(0)
 
 if __name__ == '__main__':
     import maps
