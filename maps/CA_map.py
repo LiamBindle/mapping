@@ -149,7 +149,8 @@ def _pcolormesh2_internal(ax, X, Y, C, cmap, norm):
     cY = Y[center_i, center_j]
 
     gnomonic_crs = ccrs.Gnomonic(cY, cX)
-    gnomonic_proj = pyproj.Proj(gnomonic_crs.proj4_init)
+    #gnomonic_proj = pyproj.Proj(gnomonic_crs.proj4_init)
+    gnomonic_proj = pyproj.Transformer.from_crs('epsg:4326', gnomonic_crs.proj4_init, always_xy=True).transform
 
     X_gno, Y_gno = gnomonic_proj(X, Y)
     boxes_xy_gno = np.moveaxis(gnomonic_proj(boxes_xy_pc[..., 0], boxes_xy_pc[..., 1]), 0, -1)
@@ -378,6 +379,7 @@ if __name__ == '__main__':
         exit(0)
 
     if 'nf' in da.dims:
+        # -128 -65 23 50
         for nf in range(6):
             xe = grid.xe.isel(nf=nf).values % 360
             ye = grid.ye.isel(nf=nf).values
