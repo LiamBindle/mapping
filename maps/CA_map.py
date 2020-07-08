@@ -212,7 +212,9 @@ if __name__ == '__main__':
             xc[xc > 180] -= 360
             yc = grid['grid_boxes_centers'].isel(nf=nf, XY=1).values
             mask = (xc > -128) & (xc < -65) & (yc > 23) & (yc < 50)
-            plt.pcolormesh(xe, ye, np.ma.masked_array(da.isel(nf=nf).values, ~mask), transform=ccrs.PlateCarree(), cmap=cmap, norm=norm)
+            data = da.isel(nf=nf).values
+            data[~mask] = np.nan
+            plt.pcolormesh(xe, ye, data, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm)
 
     else:
         xe, ye = grid.xe.values, grid.ye.values #pyproj.Transformer.from_crs('epsg:4326', 'epsg:2163', always_xy=True).transform(grid.xe, grid.ye)
