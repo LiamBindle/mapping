@@ -215,6 +215,7 @@ if __name__ == '__main__':
             data = da.isel(nf=nf).values
             data[~mask] = np.nan
             plt.pcolormesh(xe, ye, data, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm)
+            save_fig()
 
     else:
         xe, ye = grid.xe.values, grid.ye.values #pyproj.Transformer.from_crs('epsg:4326', 'epsg:2163', always_xy=True).transform(grid.xe, grid.ye)
