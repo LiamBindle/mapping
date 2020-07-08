@@ -17,7 +17,7 @@ def get_minor_xy(xe, ye):
 
 
 def transform_xy(xy_in, in_proj: pyproj.Proj, out_proj: pyproj.Proj):
-    xy_out = pyproj.transform(in_proj, out_proj, xy_in[..., 0], xy_in[..., 1])
+    xy_out = pyproj.transform(in_proj, out_proj, xy_in[..., 0], xy_in[..., 1], always_xy=True)
     xy_out = np.moveaxis(xy_out, 0, -1)
     return xy_out
 
