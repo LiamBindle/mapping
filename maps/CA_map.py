@@ -102,7 +102,8 @@ if __name__ == '__main__':
             verticalalignment='bottom',
         )
         road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.6)
-        width=3.27
+        # width=3.27
+        width=4.72441/2
 
     crs = ccrs.epsg(2163)
     plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width))
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     else:
         maps.outlines(
             ax, coastlines=False, borders=False, states=True, lakes=False,
-            linewidth=0.5, edgecolor='white'  #edgecolor=matplotlib.colors.to_rgba('snow', 0.9)
+            linewidth=0.4, edgecolor='white'  #edgecolor=matplotlib.colors.to_rgba('snow', 0.9)
         )
     maps.add_hills(ax, args['shapefiles'])
 
