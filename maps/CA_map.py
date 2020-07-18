@@ -116,7 +116,7 @@ if __name__ == '__main__':
     else:
         maps.outlines(
             ax, coastlines=False, borders=False, states=True, lakes=False,
-            linewidth=0.3,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.9
+            linewidth=0.35,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9)
         )
     maps.add_hills(ax, args['shapefiles'])
 
