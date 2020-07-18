@@ -101,7 +101,7 @@ if __name__ == '__main__':
             horizontalalignment='left',
             verticalalignment='bottom',
         )
-        road_params = dict(linewidth=0.12,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.8)
+        road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.6)
         width=3.27
 
     crs = ccrs.epsg(2163)
@@ -111,10 +111,14 @@ if __name__ == '__main__':
     maps.features.format_page(ax, linewidth_axis_spines=0)
     maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white', biggest_n_shapes=30)
     # maps.features.add_polygons(ax, region, outline=True, zorder=100, edgecolor='black', linewidth=0.8)
-    maps.add_roads(ax, args['shapefiles'], **road_params)
+    if args['region'] == 'California':
+        maps.add_roads(ax, args['shapefiles'], **road_params)
+    else:
+        maps.outlines(
+            ax, coastlines=False, borders=False, states=True, lakes=False,
+            linewidth=0.3,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.9
+        )
     maps.add_hills(ax, args['shapefiles'])
-
-    maps.outlines(ax, coastlines=False, borders=False, states=True, lakes=False,  edgecolor='k', linewidth=0.05, alpha=0.6)
 
     # xc = grid['grid_boxes_centers'].isel(XY=0).values
     # yc = grid['grid_boxes_centers'].isel(XY=1).values
