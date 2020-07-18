@@ -62,7 +62,7 @@ def add_hills(ax, shapefile_paths, **kwargs):
     shaded_hills(ax, sr)
 
 
-def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=False, exterior=False, exterior_thresh=0.0005, **add_feature_kwargs):
+def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=False, exterior=False, biggest_n_shapes=1, **add_feature_kwargs):
     if isinstance(polygons, shapely.geometry.base.BaseGeometry):
         polygons = [polygons]
     if outline:
@@ -73,14 +73,20 @@ def add_polygons(ax, polygons: list, crs=ccrs.PlateCarree(), outline=False, exte
         new_polygons = []
         for polygon in polygons:
             if isinstance(polygon, shapely.geometry.MultiPolygon):
-                exterior_area_thresh = polygon.envelope.area * exterior_thresh
 
                 holes = [p for p in polygon]
-                polygon = polygon.envelope.buffer(100)
-                for i, p in enumerate(holes):
-                    if p.area < exterior_area_thresh:
-                        continue
-                    polygon = polygon.difference(p)
+                box_shape = polygon.bounds
+                polygon = shapely.geometry.box(box_shape[0] - 5, box_shape[1] - 5, box_shape[2] + 5, box_shape[3] + 5)
+
+                holes_sorted_size = sorted(holes, key=lambda x: x.area, reverse=True)
+                #polygon = polygon.difference(shapely.geometry.MultiPolygon(holes_sorted_size[0:2]))
+                polygon = shapely.geometry.Polygon(polygon.exterior.coords, [h.exterior.coords for h in holes_sorted_size[:biggest_n_shapes]])
+                # polygon = polygon.difference(holes_sorted_size[1])
+
+                # for i, p in enumerate(holes):
+                #     if p.area < exterior_area_thresh:
+                #         continue
+                #     polygon = polygon.difference(p)
 
                 new_polygons.append(polygon)
             else:

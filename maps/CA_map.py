@@ -101,7 +101,7 @@ if __name__ == '__main__':
             horizontalalignment='left',
             verticalalignment='bottom',
         )
-        road_params = dict(linewidth=0.2,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9))
+        road_params = dict(linewidth=0.12,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.8)
         width=3.27
 
     crs = ccrs.epsg(2163)
@@ -109,10 +109,12 @@ if __name__ == '__main__':
     ax = plt.axes(projection=crs)
     maps.set_extent(ax, region)
     maps.features.format_page(ax, linewidth_axis_spines=0)
-    maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white')
+    maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white', biggest_n_shapes=30)
     # maps.features.add_polygons(ax, region, outline=True, zorder=100, edgecolor='black', linewidth=0.8)
     maps.add_roads(ax, args['shapefiles'], **road_params)
     maps.add_hills(ax, args['shapefiles'])
+
+    maps.outlines(ax, coastlines=False, borders=False, states=True, lakes=False,  edgecolor='k', linewidth=0.05, alpha=0.6)
 
     # xc = grid['grid_boxes_centers'].isel(XY=0).values
     # yc = grid['grid_boxes_centers'].isel(XY=1).values
@@ -203,6 +205,15 @@ if __name__ == '__main__':
         #plt.savefig(args['o'], dpi=300, bbox_inches='tight')
         exit(0)
 
+    bad_shape = shapely.geometry.Polygon([
+        (-118.7759399, 34.7799717),
+        (-118.1442261, 34.2810491),
+        (-116.9796753, 34.2118022),
+        (-116.8945313, 34.9354820),
+        (-118.3090210, 35.0457382),
+        (-118.7759399, 34.7799717),
+    ])
+
     if 'nf' in da.dims:
         for nf in range(6):
             # -128 -65 23 50
@@ -215,7 +226,10 @@ if __name__ == '__main__':
             data = da.isel(nf=nf).values
             data[~mask] = np.nan
             plt.pcolormesh(xe, ye, data, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm)
+
+            # maps.add_polygons(ax, bad_shape, outline=True)
             save_fig()
+            # plt.show()
 
     else:
         xe, ye = grid.xe.values, grid.ye.values #pyproj.Transformer.from_crs('epsg:4326', 'epsg:2163', always_xy=True).transform(grid.xe, grid.ye)
@@ -225,5 +239,5 @@ if __name__ == '__main__':
 
         plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
-        save_fig()
-        # plt.show()
+        # save_fig()
+        plt.show()
