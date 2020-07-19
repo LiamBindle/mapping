@@ -244,5 +244,5 @@ if __name__ == '__main__':
 
         plt.imshow(da.transpose()[::-1,:], norm=norm, cmap=cmap, extent=[xmin, xmax, ymin, ymax])
 
-        # save_fig()
-        plt.show()
+        save_fig()
+        # plt.show()
