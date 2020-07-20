@@ -2,9 +2,11 @@
 
 import xarray as xr
 import numpy as np
+import sys
+date = sys.argv[1]
 
-ds = xr.open_dataset('/extra-space/diags_20180629_0530.nc')
-grid = xr.open_dataset('/home/liam/Downloads/scratch/C900e-CA/comparison_grid.nc')
+ds = xr.open_dataset(f'diags_{date}.nc')
+grid = xr.open_dataset('grid.nc')
 xc = grid['grid_boxes_centers'].isel(XY=0).values
 yc = grid['grid_boxes_centers'].isel(XY=1).values
 
@@ -120,7 +122,8 @@ plt.xticks(
 plt.subplots_adjust(0.1, 0.3, 0.9, 0.9)
 
 plt.ylim((0, 4000))
-plt.show()
+# plt.show()
+plt.savefig(f'frame-{date}.png')
 
 
-print('foo')
+# print('foo')
