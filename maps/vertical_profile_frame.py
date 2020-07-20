@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 import sys
 import datetime
-date = sys.argv[1]
+date = sys.argv[1] # "20180629_0530"
 
 
 time = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[9:11]), int(date[11:13])) - datetime.timedelta(0, 7*60*60)
@@ -37,6 +37,11 @@ Ydim_slice = slice(57, 82)
 Xdim=32
 
 ds = ds.isel(nf=nf, Ydim=Ydim_slice, Xdim=Xdim)
+
+# compute_no2_column(ds.isel(lev=slice(0,72)), ds.isel(lev=slice(0,72)), ds)
+
+Md = 28.9647e-3 / 6.0221409e+23  # [kg molec-1]
+no2_area_density = ds['Met_AIRDEN'] * ds['Met_BXHEIGHT'] * ds['SpeciesConc_NO2'] / Md / 100**2
 
 u_winds = ds.Met_U.values[0, :-1, :]
 v_winds = ds.Met_V.values[0, :-1, :]
@@ -110,26 +115,29 @@ ye2 += elev_meters
 
 
 import matplotlib.pyplot as plt
-plt.figure(figsize=(10,8))
+plt.figure(figsize=(10,6))
 for i in range(xe.size):
-    v = values[:,i]
+    #v = values[:,i]
+    v = no2_area_density.values[0,:-1,i]
     x = xe2[i:i+2]
     y = ye2[:,i:i+2]
 
     x = np.column_stack([x]*73).transpose()
 
     # xx, yy = np.meshgrid(x, y, indexing='ij')
-    plt.pcolormesh(x, y, v[:, np.newaxis], norm=plt.Normalize(0, 5e-9), cmap='cividis')
+    pcm = plt.pcolormesh(x, y, v[:, np.newaxis], norm=plt.Normalize(0, 2e15), cmap='cividis')
     plt.plot(x[0], pbl2[i:i+2]+y[0], color='k')
     y_mean = np.mean(y, axis=1)
     plt.quiver(np.mean(x, axis=1)[:-1], (y_mean[:-1]+y_mean[1:])/2, v_winds[:,i], np.zeros_like(v_winds[:,i]), scale=100, width=0.002)
+
+plt.colorbar(pcm, label='NO$_2$ column density (molec cm$^{-2}$)')
 
 plt.xticks(
     [33.61, 33.833, 34.027, 34.151, 34.308, 34.685, 35.109],
     ['Newport Beach', 'Anaheim', 'LA', 'Pasadena', 'Angeles National\nForest', 'Lancaster', 'Mojave Desert'],
     rotation=90
 )
-plt.subplots_adjust(0.1, 0.3, 0.9, 0.9)
+plt.subplots_adjust(0.1, 0.3, 0.95, 0.95)
 
 if time.hour == 13 and time.minute == 30:
     plt.text(0.9, 0.9, str(time), transform=plt.gca().transAxes, horizontalalignment='right', verticalalignment='top', color='green', fontsize=20)
