@@ -121,6 +121,8 @@ plt.xticks(
 )
 plt.subplots_adjust(0.1, 0.3, 0.9, 0.9)
 
+plt.text(0.9, 0.9, date, transform=plt.gca().transAxes(), horizontalalignment='right', verticalalignment='top')
+
 plt.ylim((0, 4000))
 # plt.show()
 plt.savefig(f'frame-{date}.png')
