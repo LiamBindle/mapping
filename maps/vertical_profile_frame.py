@@ -3,7 +3,11 @@
 import xarray as xr
 import numpy as np
 import sys
+import datetime
 date = sys.argv[1]
+
+
+time = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[9:11]), int(date[11:13])) - datetime.timedelta(0, 7*60*60)
 
 ds = xr.open_dataset(f'diags_{date}.nc')
 grid = xr.open_dataset('grid.nc')
@@ -121,7 +125,8 @@ plt.xticks(
 )
 plt.subplots_adjust(0.1, 0.3, 0.9, 0.9)
 
-plt.text(0.9, 0.9, date, transform=plt.gca().transAxes(), horizontalalignment='right', verticalalignment='top')
+
+plt.text(0.9, 0.9, str(time), transform=plt.gca().transAxes, horizontalalignment='right', verticalalignment='top', color='white')
 
 plt.ylim((0, 4000))
 # plt.show()
