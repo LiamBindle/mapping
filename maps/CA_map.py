@@ -174,6 +174,32 @@ if __name__ == '__main__':
     else:
         norm = plt.Normalize(args['norm'][0], args['norm'][1])
 
+    if args['region'] == 'California':
+        bad_area = shapely.geometry.Polygon([
+            (-118.7759399, 34.7799717),
+            (-118.1442261, 34.2810491),
+            (-116.9796753, 34.2118022),
+            (-116.8945313, 34.9354820),
+            (-118.3090210, 35.0457382),
+            (-118.7759399, 34.7799717),
+        ])
+        polygons = []
+        for nf in range(6):
+            xc = grid['grid_boxes_centers'].isel(nf=nf, XY=0).values % 360
+            xc[xc > 180] -= 360
+            yc = grid['grid_boxes_centers'].isel(nf=nf, XY=1).values
+            bad_mask = maps.mask_outside(xc, yc, bad_area)
+            for p in grid.grid_boxes.isel(nf=nf).values[~bad_mask]:
+                polygons.append(shapely.geometry.Polygon(p))
+        polygons = shapely.geometry.MultiPolygon(polygons)
+        maps.add_polygons(ax,
+            polygons.buffer(0.001),
+            zorder=300, edgecolor='k', hatch='\\\\\\\\\\\\', facecolor='none', linewidth=0.3
+        )
+        import matplotlib as mpl
+        mpl.rcParams['hatch.linewidth'] = 0.3
+
+
     if args['cbar_only']: # --cbar_only 4.724 0.2 --cbar_label "NO$_2$ column density, [molec cm-2]"
         plt.figure(figsize=(args['cbar_only']))
         ax = plt.axes()
@@ -209,15 +235,6 @@ if __name__ == '__main__':
         save_fig()
         #plt.savefig(args['o'], dpi=300, bbox_inches='tight')
         exit(0)
-
-    bad_shape = shapely.geometry.Polygon([
-        (-118.7759399, 34.7799717),
-        (-118.1442261, 34.2810491),
-        (-116.9796753, 34.2118022),
-        (-116.8945313, 34.9354820),
-        (-118.3090210, 35.0457382),
-        (-118.7759399, 34.7799717),
-    ])
 
     if 'nf' in da.dims:
         for nf in range(6):
