@@ -10,7 +10,9 @@ date = sys.argv[1]
 time = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[9:11]), int(date[11:13])) - datetime.timedelta(0, 7*60*60)
 
 ds = xr.open_dataset(f'diags_{date}.nc')
+# ds = xr.open_dataset(f'/extra-space/diags_{date}.nc')
 grid = xr.open_dataset('grid.nc')
+# grid = xr.open_dataset('/extra-space/comparison_grid.nc')
 xc = grid['grid_boxes_centers'].isel(XY=0).values
 yc = grid['grid_boxes_centers'].isel(XY=1).values
 
@@ -36,6 +38,8 @@ Xdim=32
 
 ds = ds.isel(nf=nf, Ydim=Ydim_slice, Xdim=Xdim)
 
+u_winds = ds.Met_U.values[0, :-1, :]
+v_winds = ds.Met_V.values[0, :-1, :]
 values = (ds.SpeciesConc_NO2 + ds.SpeciesConc_NO).values[0, :-1, :]
 ye = np.cumsum(ds.Met_BXHEIGHT.values[0,:-1,:], axis=0)
 ye = np.concatenate([np.zeros((1,25,)), ye])
@@ -106,7 +110,7 @@ ye2 += elev_meters
 
 
 import matplotlib.pyplot as plt
-plt.figure(figsize=(6,4))
+plt.figure(figsize=(10,8))
 for i in range(xe.size):
     v = values[:,i]
     x = xe2[i:i+2]
@@ -117,16 +121,20 @@ for i in range(xe.size):
     # xx, yy = np.meshgrid(x, y, indexing='ij')
     plt.pcolormesh(x, y, v[:, np.newaxis], norm=plt.Normalize(0, 5e-9), cmap='cividis')
     plt.plot(x[0], pbl2[i:i+2]+y[0], color='k')
+    y_mean = np.mean(y, axis=1)
+    plt.quiver(np.mean(x, axis=1)[:-1], (y_mean[:-1]+y_mean[1:])/2, v_winds[:,i], np.zeros_like(v_winds[:,i]), scale=100, width=0.002)
 
 plt.xticks(
     [33.61, 33.833, 34.027, 34.151, 34.308, 34.685, 35.109],
-    ['Newport Beach', 'Anaheim', 'LA', 'Pasadena', 'Angeles N.F.', 'Lancaster', 'Mojave Desert'],
+    ['Newport Beach', 'Anaheim', 'LA', 'Pasadena', 'Angeles National\nForest', 'Lancaster', 'Mojave Desert'],
     rotation=90
 )
 plt.subplots_adjust(0.1, 0.3, 0.9, 0.9)
 
-
-plt.text(0.9, 0.9, str(time), transform=plt.gca().transAxes, horizontalalignment='right', verticalalignment='top', color='white')
+if time.hour == 13 and time.minute == 30:
+    plt.text(0.9, 0.9, str(time), transform=plt.gca().transAxes, horizontalalignment='right', verticalalignment='top', color='green', fontsize=20)
+else:
+    plt.text(0.9, 0.9, str(time), transform=plt.gca().transAxes, horizontalalignment='right', verticalalignment='top', color='white', fontsize=20)
 
 plt.ylim((0, 4000))
 # plt.show()
