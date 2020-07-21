@@ -68,16 +68,20 @@ if __name__ == '__main__':
     south = shapely.ops.transform(project, south)
     valley = shapely.ops.transform(project, valley)
 
-    US = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry
+    US = maps.get_countries(args['shapefiles']).loc['United States of America'].geometry.simplify(0.1)
     US = shapely.ops.transform(project, US)
 
     central_basins = maps.central_basins(args['shapefiles'])
     valley_and_bay = maps.central_valley_and_bay_area(args['shapefiles'])
 
     names = [
-        'North', 'Central', 'South', 'Central Valley', 'Central Basins', 'Central Valley and Bay Area', 'US'
+        # 'North', 'Central', 'South', 'Central Valley', 'Central Basins', 'Central Valley and Bay Area',
+        'US',
     ]
-    regions = [north, central, south, valley, central_basins, valley_and_bay, US]
+    regions = [
+        # north, central, south, valley, central_basins, valley_and_bay,
+        US,
+    ]
 
     for name, region in zip(names, regions):
         print(name)
