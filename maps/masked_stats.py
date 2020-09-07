@@ -87,8 +87,8 @@ if __name__ == '__main__':
         print(name)
         mask = maps.mask_outside(xc, yc, region)
 
-        x = x_da.values[~mask]
-        y = y_da.values[~mask]
+        x = np.log10(x_da.values[~mask])
+        y = np.log10(y_da.values[~mask])
 
         x = x[np.isfinite(x)]
         y = y[np.isfinite(y)]

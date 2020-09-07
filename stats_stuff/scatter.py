@@ -4,9 +4,17 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker
 import numpy as np
 import scipy.stats
+import sklearn.metrics
 from stats_stuff.open_ds import *
+import os.path
 
 plt.style.use('ggplot')
+
+COLOR = 'k'
+plt.rcParams['text.color'] = COLOR
+plt.rcParams['axes.labelcolor'] = COLOR
+plt.rcParams['xtick.color'] = COLOR
+plt.rcParams['ytick.color'] = COLOR
 
 select = {
     'O3': lambda ds: ds['SpeciesConc_O3']*1e9,
@@ -17,10 +25,11 @@ select = {
 }
 
 limits = {
-    'O3': (0.2e-7*1e9, 0.9e-7*1e9),
-    'NOx': (-10.75, -7.8),
+    'O3': (0.18e-7*1e9, 0.7e-7*1e9),
+    'NOx': (-11.2, -7.6),
     'CO': (0.5e-7*1e9, 3.2e-7*1e9),
-    'OH': (10**-13.8*1e12, 10**-12.3*1e12),
+    #'OH': (10**-13.8*1e12, 10**-12.3*1e12),
+    'OH': (0, 30e-14*1e12),
     'PM25': (0, 30),
 }
 
@@ -65,7 +74,7 @@ for i, (r, l) in enumerate(zip(row, row_label)):
 
 
     species = r
-    for ax, y, label in zip([ax1, ax2], [y1, y2], ['S48', 'C94']):
+    for ax, y, label in zip([ax1, ax2], [y1, y2], ['C96e-NA', 'C94-global']):
 
         format_axis(ax, limits[species])
 
@@ -74,6 +83,11 @@ for i, (r, l) in enumerate(zip(row, row_label)):
         pressures = pressure_x.transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
 
         isfinite = np.isfinite(x_values) & np.isfinite(y_values) & np.isfinite(pressures)
+
+        if os.path.exists('isfinite.npy'):
+            isfinite &= np.load('isfinite.npy')
+
+        np.save('isfinite', isfinite)
 
         x_values = x_values[isfinite]
         y_values = y_values[isfinite]
@@ -84,25 +98,40 @@ for i, (r, l) in enumerate(zip(row, row_label)):
         y_values = y_values[p]
         pressures = pressures[p]
 
+        def print_sm(x, y):
+            x_mean = np.mean(x)
+            y_mean = np.mean(y)
+            x_std = np.std(x)
+            y_std = np.std(y)
+            r2 = sklearn.metrics.r2_score(x, y)
+            rmse = np.sqrt(sklearn.metrics.mean_squared_error(x, y))
+            mae = sklearn.metrics.mean_absolute_error(x, y)
+            mb = np.mean(y) - np.mean(x)
+
+            print(f'x({species};{label}): {x_mean} & {x_std}')
+            print(f'y({species};{label}): {y_mean} & {y_std} & {mb} & {mae} & {rmse}')
+
+        print_sm(x_values, y_values)
+
         # ax.set_xlabel('C96', fontsize=10)
-        ax.set_ylabel(f'Simulated mean, {label}', fontsize=6)
+        ax.set_ylabel(f'Sim. mean, {label}', fontsize=6)
 
         ax.tick_params(axis='both', which='major', labelsize=7)
 
         ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap='Spectral_r', norm=plt.Normalize(300, 1000), s=2)
         ax.text(0.05, 0.95, f'{l}', horizontalalignment='left', verticalalignment='top', transform=ax.transAxes, fontsize=6)
 
-ax1.set_xlabel('Simulated mean, C96', fontsize=6)
-ax2.set_xlabel('Simulated mean, C96', fontsize=6)
+ax1.set_xlabel('Sim. mean, C96-global', fontsize=6)
+ax2.set_xlabel('Sim. mean, C96-global', fontsize=6)
 fig.align_ylabels(ax_col1)
 fig.align_ylabels(ax_col2)
 ax = fig.add_subplot(gs[-1,:])
 
 import matplotlib.cm
 cbar = plt.colorbar(matplotlib.cm.ScalarMappable(norm=plt.Normalize(300, 1000), cmap='Spectral_r'), cax=ax, orientation='horizontal')
-cbar.set_label('Pressure, [hPa]', fontsize=10)
+cbar.set_label('Pressure (hPa)', fontsize=10)
 cbar.ax.invert_xaxis()
 
 # plt.tight_layout()
-# plt.savefig('/home/liam/gmd-sg-manuscript-2020/figures/validation_scatters.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
-plt.show()
+plt.savefig('/home/liam/gmd-sg-manuscript-2020/fig03.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
+# plt.show()

@@ -158,12 +158,12 @@ if __name__ == '__main__':
     A_GRID='S48'
     B_GRID='C96'
 
-    fname_ds_a_post = f'/extra-space/sg-stats/July/{A_GRID}/GCHP.SpeciesConc.July.{B_GRID}.nc'
-    ds_a = xr.open_dataset(f'/extra-space/sg-stats/July/{A_GRID}/GCHP.SpeciesConc.July.nc')
-    ds_b = xr.open_dataset(f'/extra-space/sg-stats/July/{B_GRID}/GCHP.SpeciesConc.July.nc')
+    fname_ds_a_post = f'/extra-space/sg-stats/Sept-2/{A_GRID}/GCHP.SpeciesConc.Sept.{B_GRID}.nc'
+    ds_a = xr.open_dataset(f'/extra-space/sg-stats/Sept-2/{A_GRID}/GCHP.SpeciesConc.Sept.nc', decode_times=False)
+    ds_b = xr.open_dataset(f'/extra-space/sg-stats/Sept-2/{B_GRID}/GCHP.SpeciesConc.Sept.nc', decode_times=False)
 
-    grid_a = xr.open_dataset(f'/extra-space/sg-stats/July/{A_GRID}/grid_box_outlines_and_centers.nc')
-    grid_b = xr.open_dataset(f'/extra-space/sg-stats/July/{B_GRID}/grid_box_outlines_and_centers.nc')
+    grid_a = xr.open_dataset(f'/extra-space/sg-stats/Sept/{A_GRID}/grid_box_outlines_and_centers.nc')
+    grid_b = xr.open_dataset(f'/extra-space/sg-stats/Sept/{B_GRID}/grid_box_outlines_and_centers.nc')
 
     stacked_grid_a = grid_a.drop(['xe', 'ye', 'XdimE', 'YdimE'])\
         .stack(boxes=['nf', 'Ydim', 'Xdim'])\

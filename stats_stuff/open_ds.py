@@ -2,9 +2,9 @@ import xarray as xr
 
 def open_ds(grid, on_grid=None):
     if on_grid is None:
-        return xr.open_dataset(f'/extra-space/sg-stats/July/{grid}/GCHP.SpeciesConc.July.nc')
+        return xr.open_dataset(f'/extra-space/sg-stats/Sept-2/{grid}/GCHP.SpeciesConc.Sept.nc', decode_times=False)
     else:
-        return xr.open_dataset(f'/extra-space/sg-stats/July/{grid}/GCHP.SpeciesConc.July.{on_grid}.nc')
+        return xr.open_dataset(f'/extra-space/sg-stats/Sept-2/{grid}/GCHP.SpeciesConc.Sept.{on_grid}.nc', decode_times=False)
 
 
 def open_percent_diff(grid_a, grid_b):

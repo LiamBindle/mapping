@@ -23,13 +23,13 @@ def setup_axes():
     region = maps.get_provinces_and_states(args['shapefiles']).loc['California'].geometry
 
     crs = ccrs.epsg(2163)
-    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=2.362))
+    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=1.63386))
     ax = plt.axes(projection=crs)
     maps.set_extent(ax, region)
     maps.features.format_page(ax, linewidth_axis_spines=0)
     maps.features.add_polygons(ax, region, exterior=True, zorder=100, facecolor='white')
-    # maps.features.add_polygons(ax, region, outline=True, zorder=100, edgecolor='black', linewidth=0.8)
-    maps.add_roads(ax, args['shapefiles'], linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
+    maps.features.add_polygons(ax, region, outline=True, zorder=99, edgecolor='black', linewidth=0.2)
+    maps.add_roads(ax, args['shapefiles'], linewidth=0.3,  edgecolor=matplotlib.colors.to_rgba('snow', 0.5))
     maps.add_hills(ax, args['shapefiles'])
     return ax
 
@@ -155,29 +155,41 @@ if __name__ == '__main__':
 
     setup_axes()
     plt.imshow(data_r2, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-1, 1), cmap='RdYlGn')
-    plt.savefig(f"{args['o']}/R2.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+                        hspace = 0, wspace = 0)
+    plt.margins(0,0)
+    plt.savefig(f"{args['o']}/R2.png", dpi=300)
 
     setup_axes()
     plt.imshow(data_mb, extent=[xmin, xmax, ymin, ymax], norm=plt.Normalize(-0.3, 0.3), cmap='RdBu_r')   # <-- this one
-    plt.savefig(f"{args['o']}/NMB.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+                        hspace = 0, wspace = 0)
+    plt.margins(0,0)
+    plt.savefig(f"{args['o']}/NMB.png", dpi=300)
 
-    plt.figure(figsize=(4.724-0.1, 0.2))
+    plt.figure(figsize=(3.26772, 0.8))
     ax = plt.axes()
     cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap('RdYlGn'),
                                           norm=plt.Normalize(-1, 1),
                                           orientation='horizontal')
-    cb.set_label('r$^{2}$ score')
-    plt.savefig(f"{args['o']}/R2-cbar.png", dpi=300, bbox_inches='tight', pad_inches=0.05)
+    cb.set_label('R$^{2}$ score')
+    plt.subplots_adjust(top=0.95, bottom=0.7, right=0.95, left=0.05,
+                        hspace=0, wspace=0)
+    plt.margins(0.1,0.1)
+    plt.savefig(f"{args['o']}/R2-cbar.png", dpi=300, pad_inches=0)
 
-    plt.figure(figsize=(4.724-0.1, 0.2))
+    plt.figure(figsize=(3.26772, 0.8))
     ax = plt.axes()
     cb = matplotlib.colorbar.ColorbarBase(ax, cmap=plt.get_cmap('RdBu_r'),
                                           norm=plt.Normalize(-0.3, 0.3),
                                           orientation='horizontal')
     cb.set_label('Normalized mean bias')
-    plt.savefig(f"{args['o']}/NMB-cbar.png", dpi=300, bbox_inches='tight', pad_inches=0.05)
+    plt.subplots_adjust(top=0.95, bottom=0.7, right=0.95, left=0.05,
+                        hspace=0, wspace=0)
+    plt.margins(0.1,0.1)
+    plt.savefig(f"{args['o']}/NMB-cbar.png", dpi=300, pad_inches=0)
 
-    plt.figure(figsize=(4.724-0.1, 0.05))
+    plt.figure(figsize=(3.26772, 0.05))
     ax = plt.axes()
     plt.text(
         x=1/4-0.5/4, y=0.5, s="CTL",

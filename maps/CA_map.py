@@ -102,11 +102,11 @@ if __name__ == '__main__':
             verticalalignment='bottom',
         )
         road_params = dict(linewidth=0.25,  edgecolor=matplotlib.colors.to_rgba('snow', 0.9), alpha=0.6)
-        # width=3.27
-        width=4.72441/2
+        width=3.27
+        # width=4.72441/2
 
     crs = ccrs.epsg(2163)
-    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width))
+    plt.figure(figsize=maps.figsize_fitting_polygon(region, crs, width=width), dpi=300)
     ax = plt.axes(projection=crs)
     maps.set_extent(ax, region)
     maps.features.format_page(ax, linewidth_axis_spines=0)
@@ -120,6 +120,10 @@ if __name__ == '__main__':
             linewidth=0.4, edgecolor='white'  #edgecolor=matplotlib.colors.to_rgba('snow', 0.9)
         )
     maps.add_hills(ax, args['shapefiles'])
+
+    # geosfp = xr.open_dataset('/extra-space/scratch/geosfp_grid.nc')
+    # xx, yy = np.meshgrid(geosfp.lon.values, geosfp.lat.values, indexing='ij')
+    # ax.scatter(xx.flatten(), yy.flatten(), transform=ccrs.PlateCarree(), zorder=400, s=0.05)
 
     # xc = grid['grid_boxes_centers'].isel(XY=0).values
     # yc = grid['grid_boxes_centers'].isel(XY=1).values
@@ -212,7 +216,7 @@ if __name__ == '__main__':
         ax = plt.axes()
         cb = matplotlib.colorbar.ColorbarBase(ax, cmap=cmap,
                                               norm=norm,
-                                              orientation='horizontal')
+                                              orientation='horizontal', extend='both')
         cb.set_label(args['cbar_label'])
         plt.subplots_adjust(top=0.95, bottom=0.7, right=0.95, left=0.05,
                             hspace=0, wspace=0)
