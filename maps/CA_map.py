@@ -188,28 +188,28 @@ if __name__ == '__main__':
             (-118.7759399, 34.7799717),
         ])
         import matplotlib as mpl
-        mpl.rcParams['hatch.linewidth'] = 0.3
-        if 'nf' in da.dims:
-            polygons = []
-            for nf in range(6):
-                xc = grid['grid_boxes_centers'].isel(nf=nf, XY=0).values % 360
-                xc[xc > 180] -= 360
-                yc = grid['grid_boxes_centers'].isel(nf=nf, XY=1).values
-                bad_mask = maps.mask_outside(xc, yc, bad_area)
-                for p in grid.grid_boxes.isel(nf=nf).values[~bad_mask]:
-                    xy = np.copy(p)
-                    xy[xy > 180] -= 360
-                    polygons.append(shapely.geometry.Polygon(xy))
-            polygons = shapely.geometry.MultiPolygon(polygons)
-            maps.add_polygons(ax,
-                polygons.buffer(0.001),
-                zorder=300, edgecolor='k', hatch='\\\\\\\\\\\\', facecolor='none', linewidth=0.3
-            )
-        else:
-            maps.add_polygons(ax,
-                bad_area,
-                zorder=300, edgecolor='k', hatch='\\\\\\\\\\\\', facecolor='none', linewidth=0.3
-            )
+        # mpl.rcParams['hatch.linewidth'] = 0.3
+        # if 'nf' in da.dims:
+        #     polygons = []
+        #     for nf in range(6):
+        #         xc = grid['grid_boxes_centers'].isel(nf=nf, XY=0).values % 360
+        #         xc[xc > 180] -= 360
+        #         yc = grid['grid_boxes_centers'].isel(nf=nf, XY=1).values
+        #         bad_mask = maps.mask_outside(xc, yc, bad_area)
+        #         for p in grid.grid_boxes.isel(nf=nf).values[~bad_mask]:
+        #             xy = np.copy(p)
+        #             xy[xy > 180] -= 360
+        #             polygons.append(shapely.geometry.Polygon(xy))
+        #     polygons = shapely.geometry.MultiPolygon(polygons)
+        #     maps.add_polygons(ax,
+        #         polygons.buffer(0.001),
+        #         zorder=300, edgecolor='k', hatch='\\\\\\\\\\\\', facecolor='none', linewidth=0.3
+        #     )
+        # else:
+        #     maps.add_polygons(ax,
+        #         bad_area,
+        #         zorder=300, edgecolor='k', hatch='\\\\\\\\\\\\', facecolor='none', linewidth=0.3
+        #     )
 
     if args['cbar_only']: # --cbar_only 4.724 0.2 --cbar_label "NO$_2$ column density, [molec cm-2]"
         plt.figure(figsize=(args['cbar_only']))
@@ -220,6 +220,8 @@ if __name__ == '__main__':
         cb.set_label(args['cbar_label'])
         plt.subplots_adjust(top=0.95, bottom=0.7, right=0.95, left=0.05,
                             hspace=0, wspace=0)
+        # plt.subplots_adjust(right=0.3, left=0.05, top=0.95, bottom=0.05,
+        #                     hspace=0, wspace=0)
         plt.margins(0.1,0.1)
         plt.savefig(args['o'], dpi=300, pad_inches=0)
         exit(0)
