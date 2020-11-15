@@ -1,24 +1,28 @@
 
 import xarray as xr
 grids = {
-    'C96': xr.open_dataset('/extra-space/sg-stats/June/C96/grid_box_outlines_and_centers.nc'),
-    'C98': xr.open_dataset('/extra-space/sg-stats/June/C98/grid_box_outlines_and_centers.nc'),
-    'C100': xr.open_dataset('/extra-space/sg-stats/June/C100/grid_box_outlines_and_centers.nc'),
-    'S48': xr.open_dataset('/extra-space/sg-stats/June/S48/grid_box_outlines_and_centers.nc'),
+    'C96': xr.open_dataset('/extra-space/sg-stats/Sept/S48/grid_box_outlines_and_centers.nc'),
 }
 
 import stats_stuff.open_ds
+
+import maps
 
 import matplotlib.pyplot as plt
 import matplotlib.cm
 import cartopy.crs as ccrs
 import numpy as np
-ax = plt.axes(projection=ccrs.PlateCarree())
+ax = plt.axes(projection=ccrs.epsg(2163))
 ax.coastlines()
 
-data = stats_stuff.open_ds.open_ds('C96', 'C96')
-data2 = stats_stuff.open_ds.open_ds('S48', 'C96')
+data = stats_stuff.open_ds.open_ds('S48')
+data2 = stats_stuff.open_ds.open_ds('C94', 'C96')
 
+ax.set_extent([-91, -84, 40.7, 46])
+maps.outlines(
+    ax, coastlines=False, borders=False, states=True, lakes=False,
+    linewidth=0.4, edgecolor='white'  #edgecolor=matplotlib.colors.to_rgba('snow', 0.9)
+)
 # ax.set_global()
 
 # for i in range(6):
@@ -31,19 +35,23 @@ data2 = stats_stuff.open_ds.open_ds('S48', 'C96')
 for i in range(6):
     xe = grids['C96'].xe.isel(nf=i)
     ye = grids['C96'].ye.isel(nf=i)
-    v = data.SpeciesConc_O3.isel(time=0, nf=i, lev=20)
+    v = data.SpeciesConc_NO2.isel(time=0, nf=i, lev=20)
     # v = np.log10(v)
-    vmin=0.4e-7
-    vmax=0.8e-7
+    vmin=3e-11
+    vmax=7e-11
     ax.pcolormesh(xe.values, ye.values, v, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
 
-cv = (data.SpeciesConc_O3.isel(time=0, lev=20).std()/data.SpeciesConc_O3.isel(time=0, lev=20).mean()).item()
-rmse = np.nanstd(data2.SpeciesConc_O3.isel(time=0, lev=20) - data.SpeciesConc_O3.isel(time=0, lev=20))/(0.5*(data.SpeciesConc_O3.isel(time=0, lev=20)+data2.SpeciesConc_O3.isel(time=0, lev=20))).mean()
-mb = np.nanmean(data2.SpeciesConc_O3.isel(time=0, lev=20) - data.SpeciesConc_O3.isel(time=0, lev=20))/(0.5*(data.SpeciesConc_O3.isel(time=0, lev=20)+data2.SpeciesConc_O3.isel(time=0, lev=20))).mean()
+plt.scatter([-87.6298], [41.8781], zorder=400, transform=ccrs.PlateCarree(), c='white')
+ax.annotate('Chicago', xy=(-87.8,42), xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
+            ha='left', va='bottom', color='white')
 
-print('CV: ', cv)
-print('RMSE/mu: ', rmse)
-print('MB/mu: ', mb)
+# cv = (data.SpeciesConc_O3.isel(time=0, lev=20).std()/data.SpeciesConc_O3.isel(time=0, lev=20).mean()).item()
+# rmse = np.nanstd(data2.SpeciesConc_O3.isel(time=0, lev=20) - data.SpeciesConc_O3.isel(time=0, lev=20))/(0.5*(data.SpeciesConc_O3.isel(time=0, lev=20)+data2.SpeciesConc_O3.isel(time=0, lev=20))).mean()
+# mb = np.nanmean(data2.SpeciesConc_O3.isel(time=0, lev=20) - data.SpeciesConc_O3.isel(time=0, lev=20))/(0.5*(data.SpeciesConc_O3.isel(time=0, lev=20)+data2.SpeciesConc_O3.isel(time=0, lev=20))).mean()
+
+# print('CV: ', cv)
+# print('RMSE/mu: ', rmse)
+# print('MB/mu: ', mb)
 
 plt.colorbar(matplotlib.cm.ScalarMappable(norm=plt.Normalize(vmin, vmax)))
 
