@@ -18,7 +18,7 @@ plt.rcParams['ytick.color'] = COLOR
 
 select = {
     'O3': lambda ds: ds['SpeciesConc_O3']*1e9,
-    'NOx': lambda ds: np.log10(ds['SpeciesConc_NO'] + ds['SpeciesConc_NO2']),
+    'NOx': lambda ds: np.log10((ds['SpeciesConc_NO'] + ds['SpeciesConc_NO2'])*1e9),
     'CO': lambda ds: ds['SpeciesConc_CO']*1e9,
     'OH': lambda ds: ds['SpeciesConc_OH']*1e12,
     'PM25': lambda ds: ds['PM25'],
@@ -26,7 +26,7 @@ select = {
 
 limits = {
     'O3': (0.18e-7*1e9, 0.7e-7*1e9),
-    'NOx': (-11.2, -7.6),
+    'NOx': (-11.2+9, -7.6+9),
     'CO': (0.5e-7*1e9, 3.2e-7*1e9),
     #'OH': (10**-13.8*1e12, 10**-12.3*1e12),
     'OH': (0, 30e-14*1e12),
@@ -41,11 +41,35 @@ y1 = open_ds('S48', 'C96')
 y2 = open_ds('C94', 'C96')
 
 
-fig = plt.figure(figsize=(3.23772, 7), constrained_layout=True)
+fig = plt.figure(figsize=(3.26772, 6.8), constrained_layout=True)
 gs = plt.GridSpec(ncols=2, nrows=6, figure=fig, height_ratios=[1, 1, 1, 1, 1, 0.1], wspace=0)
 
 row = ['O3', 'NOx', 'CO', 'OH', 'PM25']
-row_label = ['O$_3$, ppb', 'log$_{10}$ NO$_\\mathrm{x}$', 'CO, ppb', 'OH, ppt', 'PM$_{2.5}$, $\\mu$g m$^{-3}$']
+row_label = ['O$_3$, ppb', 'log$_{10}$ NO$_\\mathrm{x}$, ppb', 'CO, ppb', 'OH, ppt', 'PM$_{2.5}$, $\\mathrm{\\mu}$g m$^{-3}$']
+
+def hide_ax(ax):
+    ax.spines['top'].set_color('none')
+    ax.spines['bottom'].set_color('none')
+    ax.spines['left'].set_color('none')
+    ax.spines['right'].set_color('none')
+    ax.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
+    ax.set_facecolor('none')
+    ax.grid(False)
+    ax.set_yticks([])
+
+tax = fig.add_subplot(gs[4,:])
+hide_ax(tax)
+tax.set_xlabel('Simulated concentration, C96-global', fontsize=10)
+
+tax = fig.add_subplot(gs[:5,0])
+hide_ax(tax)
+tax.set_ylabel('Simulated concentration, C96e-NA', fontsize=10, labelpad=30)
+
+tax = fig.add_subplot(gs[:5,-1])
+hide_ax(tax)
+tax.set_ylabel('Simulated concentration, C94-global', fontsize=10, labelpad=30)
+tax.yaxis.tick_right()
+tax.yaxis.set_label_position("right")
 
 ax_col1 = []
 ax_col2 = []
@@ -114,18 +138,24 @@ for i, (r, l) in enumerate(zip(row, row_label)):
         print_sm(x_values, y_values)
 
         # ax.set_xlabel('C96', fontsize=10)
-        ax.set_ylabel(f'Sim. mean, {label}', fontsize=6)
+        # ax.set_ylabel(f'Sim. mean, {label}', fontsize=6)
 
         ax.tick_params(axis='both', which='major', labelsize=7)
+
+        if label == 'C94-global':
+            ax.yaxis.tick_right()
+            ax.yaxis.set_label_position("right")
 
         ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap='Spectral_r', norm=plt.Normalize(300, 1000), s=2)
         ax.text(0.05, 0.95, f'{l}', horizontalalignment='left', verticalalignment='top', transform=ax.transAxes, fontsize=6)
 
-ax1.set_xlabel('Sim. mean, C96-global', fontsize=6)
-ax2.set_xlabel('Sim. mean, C96-global', fontsize=6)
+
+# ax1.set_xlabel('Sim. mean, C96-global', fontsize=6)
+# ax2.set_xlabel('Sim. mean, C96-global', fontsize=6)
 fig.align_ylabels(ax_col1)
 fig.align_ylabels(ax_col2)
 ax = fig.add_subplot(gs[-1,:])
+
 
 import matplotlib.cm
 cbar = plt.colorbar(matplotlib.cm.ScalarMappable(norm=plt.Normalize(300, 1000), cmap='Spectral_r'), cax=ax, orientation='horizontal')
@@ -133,5 +163,5 @@ cbar.set_label('Pressure (hPa)', fontsize=10)
 cbar.ax.invert_xaxis()
 
 # plt.tight_layout()
-plt.savefig('/home/liam/gmd-sg-manuscript-2020/fig03.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
-# plt.show()
+plt.savefig('/home/liam/gmd-sg-manuscript-2020/foo.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
+plt.show()
