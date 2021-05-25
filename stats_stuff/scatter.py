@@ -102,16 +102,24 @@ for i, (r, l) in enumerate(zip(row, row_label)):
 
         format_axis(ax, limits[species])
 
-        x_values = select[species](x).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
-        y_values = select[species](y).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
-        pressures = pressure_x.transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        # x_values = select[species](x).isel(lev=slice(1,None)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        # y_values = select[species](y).isel(lev=slice(1,None)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        # pressures = pressure_x.isel(lev=slice(1,None)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        x_values = select[species](x).isel(lev=slice(0,30)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        y_values = select[species](y).isel(lev=slice(0,30)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values.flatten()
+        pressures = pressure_x.isel(lev=slice(0,30)).transpose('time', 'nf', 'Ydim', 'lev', 'Xdim').values
 
-        isfinite = np.isfinite(x_values) & np.isfinite(y_values) & np.isfinite(pressures)
+        pressures_copy = pressures.flatten()
+        pressures[pressures > 1000] = 999
+        pressures[:,:,:,0,:] = 1001
+        pressures = pressures.flatten()
 
-        if os.path.exists('isfinite.npy'):
-            isfinite &= np.load('isfinite.npy')
+        isfinite = np.isfinite(x_values) & np.isfinite(y_values) & np.isfinite(pressures_copy) & (pressures_copy > 300)
 
-        np.save('isfinite', isfinite)
+        # if os.path.exists('isfinite.npy'):
+        #     isfinite &= np.load('isfinite.npy')
+        #
+        # np.save('isfinite', isfinite)
 
         x_values = x_values[isfinite]
         y_values = y_values[isfinite]
@@ -122,20 +130,20 @@ for i, (r, l) in enumerate(zip(row, row_label)):
         y_values = y_values[p]
         pressures = pressures[p]
 
-        def print_sm(x, y):
-            x_mean = np.mean(x)
-            y_mean = np.mean(y)
-            x_std = np.std(x)
-            y_std = np.std(y)
-            r2 = sklearn.metrics.r2_score(x, y)
-            rmse = np.sqrt(sklearn.metrics.mean_squared_error(x, y))
-            mae = sklearn.metrics.mean_absolute_error(x, y)
-            mb = np.mean(y) - np.mean(x)
-
-            print(f'x({species};{label}): {x_mean} & {x_std}')
-            print(f'y({species};{label}): {y_mean} & {y_std} & {mb} & {mae} & {rmse}')
-
-        print_sm(x_values, y_values)
+        # def print_sm(x, y):
+        #     x_mean = np.mean(x)
+        #     y_mean = np.mean(y)
+        #     x_std = np.std(x)
+        #     y_std = np.std(y)
+        #     r2 = sklearn.metrics.r2_score(x, y)
+        #     rmse = np.sqrt(sklearn.metrics.mean_squared_error(x, y))
+        #     mae = sklearn.metrics.mean_absolute_error(x, y)
+        #     mb = np.mean(y) - np.mean(x)
+        #
+        #     print(f'x({species};{label}): {x_mean} & {x_std}')
+        #     print(f'y({species};{label}): {y_mean} & {y_std} & {mb} & {mae} & {rmse}')
+        #
+        # print_sm(x_values, y_values)
 
         # ax.set_xlabel('C96', fontsize=10)
         # ax.set_ylabel(f'Sim. mean, {label}', fontsize=6)
@@ -145,9 +153,42 @@ for i, (r, l) in enumerate(zip(row, row_label)):
         if label == 'C94-global':
             ax.yaxis.tick_right()
             ax.yaxis.set_label_position("right")
-
-        ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap='Spectral_r', norm=plt.Normalize(300, 1000), s=2)
+        # pressures[pressures>999] = 999
+        cmap = plt.get_cmap('Spectral_r')
+        cmap.set_over('tab:brown')
+        cmap.set_under('green')
+        #pressures[pressures<300] = 299
+        # indexes near 4,40,9
+        ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap=cmap, norm=plt.Normalize(300, 1000), s=2)
         ax.text(0.05, 0.95, f'{l}', horizontalalignment='left', verticalalignment='top', transform=ax.transAxes, fontsize=6)
+
+        # x_values = select[species](x).isel(lev=0).transpose('time', 'nf', 'Ydim', 'Xdim').values.flatten()
+        # y_values = select[species](y).isel(lev=0).transpose('time', 'nf', 'Ydim','Xdim').values.flatten()
+        # pressures = pressure_x.isel(lev=0).transpose('time', 'nf', 'Ydim', 'Xdim').values.flatten()
+        # isfinite = np.isfinite(x_values) & np.isfinite(y_values) & np.isfinite(pressures)
+        # x_values = x_values[isfinite]
+        # y_values = y_values[isfinite]
+        # pressures = pressures[isfinite]
+        # p = np.random.permutation(x_values.size)
+        # x_values = x_values[p]
+        # y_values = y_values[p]
+        # pressures = pressures[p]
+        # pressures[:] = 1001
+        # ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap=cmap, norm=plt.Normalize(300, 1000), s=2)
+
+        # x_values = select[species](x).isel(nf=4, Ydim=slice(38, 42), Xdim=slice(7,11)).transpose('time', 'lev', 'Ydim', 'Xdim').values.flatten()
+        # y_values = select[species](y).isel(nf=4, Ydim=slice(38, 42), Xdim=slice(7,11)).transpose('time', 'lev', 'Ydim','Xdim').values.flatten()
+        # pressures = pressure_x.isel(nf=4, Ydim=slice(38, 42), Xdim=slice(7,11)).transpose('time', 'lev', 'Ydim', 'Xdim').values.flatten()
+        # isfinite = np.isfinite(x_values) & np.isfinite(y_values) & np.isfinite(pressures)
+        # x_values = x_values[isfinite]
+        # y_values = y_values[isfinite]
+        # pressures = pressures[isfinite]
+        # p = np.random.permutation(x_values.size)
+        # x_values = x_values[p]
+        # y_values = y_values[p]
+        # pressures = pressures[p]
+        # pressures[:] = 100
+        # ax.scatter(x_values, y_values, c=pressures, edgecolor='', cmap=cmap, norm=plt.Normalize(300, 1000), s=2)
 
 
 # ax1.set_xlabel('Sim. mean, C96-global', fontsize=6)
@@ -158,10 +199,10 @@ ax = fig.add_subplot(gs[-1,:])
 
 
 import matplotlib.cm
-cbar = plt.colorbar(matplotlib.cm.ScalarMappable(norm=plt.Normalize(300, 1000), cmap='Spectral_r'), cax=ax, orientation='horizontal')
+cbar = plt.colorbar(matplotlib.cm.ScalarMappable(norm=plt.Normalize(300, 1000), cmap='Spectral_r'), cax=ax, orientation='horizontal', extend='max', extendrect=True)
 cbar.set_label('Pressure (hPa)', fontsize=10)
 cbar.ax.invert_xaxis()
 
 # plt.tight_layout()
-plt.savefig('/home/liam/gmd-sg-manuscript-2020/foo.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
+plt.savefig('/home/liam/mapping/stats_stuff/foo2.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
 plt.show()
